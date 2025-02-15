@@ -1,34 +1,18 @@
 'use client'
 import React, { useState } from 'react';
 
-const Preferences = () => {
+const Preferences = ({ onPreferencesChange }) => {
   const [preferences, setPreferences] = useState([]);
   const [newPreference, setNewPreference] = useState('');
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     if (!newPreference.trim()) return;
 
-    // Add to local state
-    setPreferences([...preferences, newPreference]);
-
-    try {
-      // Send to backend
-      const response = await fetch('/api/preferences', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ preference: newPreference }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to save preference');
-      }
-    } catch (error) {
-      console.error('Error saving preference:', error);
-      // Optionally handle error in UI
-    }
+    // Update preferences and notify parent
+    const updatedPreferences = [...preferences, newPreference];
+    setPreferences(updatedPreferences);
+    onPreferencesChange(updatedPreferences);
 
     // Clear input
     setNewPreference('');

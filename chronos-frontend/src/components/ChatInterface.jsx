@@ -1,63 +1,64 @@
 import { useState } from 'react';
-import { Send, ArrowUp } from 'lucide-react';
+import { Send } from 'lucide-react';
 
-const ChatApp = () => {
+const ChatInterface = ({ onSubmit }) => {
     const [messages, setMessages] = useState([
         {
             id: 1,
-            text: "I'm starting a new project at work. I'll need to set aside 2 hours a week to work independently",
-            isUser: true
-        },
-        {
-            id: 2,
-            text: "Sounds great! Looks like you're most available between 1pm and 5pm on Thursday and Friday. What time/day would you like to book?",
-            isUser: false
-        },
-        {
-            id: 3,
-            text: "Friday 1pm to 3pm",
-            isUser: true
-        },
-        {
-            id: 4,
-            text: "Updated. Is this a reoccurring time block?",
-            isUser: false
-        },
-        {
-            id: 5,
-            text: "Yes, reoccurring for the next month.",
-            isUser: true
-        },
-        {
-            id: 6,
-            text: "Got it! Your meeting is now booked in your calendar.",
+            text: "Hi! I'm Chronos, your AI scheduling assistant. How can I help you today?",
             isUser: false
         }
     ]);
 
     const [newMessage, setNewMessage] = useState('');
 
-    const handleSendMessage = () => {
+    const handleSendMessage = async () => {
         if (newMessage.trim() === '') return;
 
-        setMessages([
-            ...messages,
-            { id: messages.length + 1, text: newMessage, isUser: true }
-        ]);
+        // Add user message to chat
+        const userMessage = { 
+            id: messages.length + 1, 
+            text: newMessage, 
+            isUser: true 
+        };
+        setMessages(prev => [...prev, userMessage]);
 
+        // Store message to send
+        const messageToSend = newMessage;
         setNewMessage('');
 
-        // Simulate a bot response
-        setTimeout(() => {
+        try {
+            // Add loading message
+            setMessages(prev => [...prev, {
+                id: prev.length + 1,
+                text: "Processing your request...",
+                isUser: false
+            }]);
+
+            // Send to backend
+            await onSubmit(messageToSend);
+
+            // Replace loading message with confirmation
             setMessages(prev => [
-                ...prev,
+                ...prev.slice(0, -1),
                 {
-                    id: prev.length + 1,
-                    text: "Thanks for your message! I'll follow up shortly.",
+                    id: prev.length,
+                    text: "I've processed your request. Check your calendar for updates!",
                     isUser: false
                 }
             ]);
-        }, 1000);
+        } catch (error) {
+            // Replace loading message with error
+            setMessages(prev => [
+                ...prev.slice(0, -1),
+                {
+                    id: prev.length,
+                    text: "Sorry, I encountered an error while processing your request. Please try again.",
+                    isUser: false
+                }
+            ]);
+            console.error('Error sending message:', error);
+        }
     };
 
     return (
@@ -82,11 +83,11 @@ const ChatApp = () => {
                     >
                         <div
                             className={`
-                max-w-xs lg:max-w-md px-3 py-2 rounded-lg
-                ${message.isUser
+                                max-w-xs lg:max-w-md px-3 py-2 rounded-lg
+                                ${message.isUser
                                     ? 'bg-blue-100 text-gray-800 rounded-br-none'
                                     : 'bg-white text-gray-800 border border-gray-200 rounded-bl-none'}
-              `}
+                            `}
                         >
                             {message.text}
                         </div>
@@ -119,4 +120,4 @@ const ChatApp = () => {
     );
 };
 
-export default ChatApp;
+export default ChatInterface;
