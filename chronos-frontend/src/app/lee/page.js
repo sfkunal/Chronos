@@ -200,8 +200,8 @@ const PageLayout = () => {
             {/* Left Column aka Month Calendar View + Preferences */}
             <div className="col-span-2 h-screen">
               {/* Top Left Month Calendar View */}
-              {/* TODO: Show current date + week highlighted */}
-              <div className="h-[33vh] pl-2">
+              <div className="h-[35vh]">
+                {/* TODO: Show current date + week highlighted */}
                 <Calendar
                   mode="single"
                   selected={date}
@@ -210,8 +210,8 @@ const PageLayout = () => {
                 />
               </div>
               
-              {/* Preferences */}``
-              <div className="h-[67vh]">
+              {/* Preferences */}
+              <div className="h-[65vh]">
                 <Preferences />
               </div>
             </div>
