@@ -191,7 +191,7 @@ const PageLayout = () => {
     const [date, setDate] = React.useState(new Date())
     return (
         <div className={manrope.className}>
-            <div className="min-h-screen bg-white-100">
+            <div className="min-h-screen bg-gray-50">
                 <div className="w-full">
                     {/* Main Grid Layout */}
                     <div className="grid grid-cols-12 gap-4">

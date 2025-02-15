@@ -115,21 +115,6 @@ const ChatApp = () => {
                     </button>
                 </div>
             </div>
-
-            {/* Follow up */}
-            <div className="p-3 border-t bg-white">
-                <div className="flex items-center space-x-2 text-gray-500">
-                    <span>/</span>
-                    <span>Follow up</span>
-                </div>
-            </div>
-
-            {/* Float button */}
-            <div className="absolute bottom-3 right-3">
-                <button className="w-10 h-10 rounded-full bg-blue-100 text-blue-500 flex items-center justify-center hover:bg-blue-200 transition">
-                    <ArrowUp size="50%" />
-                </button>
-            </div>
         </div>
     );
 };
