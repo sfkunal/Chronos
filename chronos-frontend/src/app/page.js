@@ -211,6 +211,37 @@ function CalendarPage() {
 
 const PageLayout = () => {
     const [date, setDate] = React.useState(new Date())
+    const [userPreferences, setUserPreferences] = React.useState([]);
+    const handlePreferencesChange = (newPreferences) => {
+        setUserPreferences(newPreferences);
+    };
+    const handleChatSubmit = async (prompt) => {
+        try {
+            const response = await fetch('http://127.0.0.1:5000/api/schedule', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                    action_query: prompt,
+                    preferences: userPreferences
+                })
+            });
+            console.log('Response:', response);
+            // Get the error message from the response
+            const responseData = await response.json();
+            console.log('Response data:', responseData);
+            if (!response.ok) {
+                throw new Error(responseData.message || 'Failed to schedule event');
+            }
+            return responseData;
+        } catch (error) {
+            console.error('Error scheduling event:', error);
+            throw error; // Re-throw to be handled by ChatInterface
+        }
+    };
+
     return (
         <div className={manrope.className}>
             <div className="min-h-screen bg-gray-50">
@@ -232,7 +263,7 @@ const PageLayout = () => {
 
                             {/* Preferences */}``
                             <div className="h-[65vh]">
-                                <Preferences />
+                                <Preferences onPreferencesChange={handlePreferencesChange}/>
                             </div>
                         </div>
 
@@ -247,7 +278,7 @@ const PageLayout = () => {
                                 title="Chronos"
                                 className="h-[90vh] bg-[#E4E4E4] rounded-xl"
                             /> */}
-                            <ChatInterface />
+                            <ChatInterface onSubmit={handleChatSubmit}/>
                         </div>
                     </div>
                 </div>
