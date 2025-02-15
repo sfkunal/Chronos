@@ -2,6 +2,7 @@
 import React from 'react';
 import { Manrope } from 'next/font/google';
 import { Calendar } from '@/components/ui/calendar';
+import Preferences from '@/components/Preferences';
 
 const manrope = Manrope({ subsets: ['latin'] })
 
@@ -38,10 +39,7 @@ const CalendarLayout = () => {
               
               {/* Preferences */}
               <div className="h-[67vh]">
-                <DemoContent 
-                  title="Preferences" 
-                  className="h-full bg-[#E4E4E4] rounded-xl"
-                />
+                <Preferences />
               </div>
             </div>
 
