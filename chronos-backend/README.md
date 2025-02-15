@@ -6,4 +6,4 @@ FLASK_ENV=development
 ```
 
 2. pip install -r requirements.txt
-3. flask run
+3. python app.py
