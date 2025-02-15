@@ -53,13 +53,41 @@ const generateSampleEvents = () => {
   ];
 };
 
-function CalendarPage() {
-  const [events, setEvents] = useState(generateSampleEvents());
-  const [selectedEvent, setSelectedEvent] = useState(null);
+const transformGoogleEvents = (googleEvents) => {
+  return googleEvents.map(event => ({
+    id: event.id,
+    title: event.summary,
+    start: new Date(event.start.dateTime || event.start.date),
+    end: new Date(event.end.dateTime || event.end.date),
+    color: getColorFromId(event.colorId), // We'll define this function
+    description: event.description || ''
+  }));
+};
 
-  const [isLoggedIn, setIsLoggedIn] = React.useState(false)
-  const [events1, setEvents1] = React.useState([])
-  const [authToken, setAuthToken] = React.useState(null)
+// Google Calendar color IDs to hex colors mapping
+const getColorFromId = (colorId) => {
+  const colorMap = {
+    '1': '#7986cb', // Lavender
+    '2': '#33b679', // Sage
+    '3': '#8e24aa', // Grape
+    '4': '#e67c73', // Flamingo
+    '5': '#f6c026', // Banana
+    '6': '#f5511d', // Tangerine
+    '7': '#039be5', // Peacock
+    '8': '#616161', // Graphite
+    '9': '#3f51b5', // Blueberry
+    '10': '#0b8043', // Basil
+    'default': '#3b82f6' // Default blue
+  };
+  return colorMap[colorId] || colorMap.default;
+};
+
+function CalendarPage() {
+  const [events, setEvents] = useState([]);
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [isLoggedIn, setIsLoggedIn] = React.useState(false);
+  const [events1, setEvents1] = React.useState([]);
+  const [authToken, setAuthToken] = React.useState(null);
 
   useEffect(() => {
   const params = new URLSearchParams(window.location.search);
@@ -113,6 +141,16 @@ function CalendarPage() {
       checkAuthAndFetchEvents();
     }
   }, [isLoggedIn]);
+
+  // Transform and combine events when events1 changes
+  useEffect(() => {
+    if (events1.length > 0) {
+      const transformedEvents = transformGoogleEvents(events1);
+      setEvents(transformedEvents);
+    } else {
+      setEvents(generateSampleEvents()); // Fallback to sample events if no real events
+    }
+  }, [events1]);
 
   console.log('Calendar Events:', events1);
 
