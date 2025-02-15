@@ -76,27 +76,42 @@ def update_events_in_chroma(events):
             collection.delete(ids=existing['ids'])
             logging.info(f"Cleared {len(existing['ids'])} existing events from collection")
 
-        # Create one large document containing all events
-        all_events_text = ""
-        for event in events:
-            try:
-                event_text = stringify_event(event)
-                all_events_text += event_text + " "
-            except Exception as e:
-                logging.error(f"Error processing event: {str(e)}")
-                continue
+        # Process events in smaller chunks
+        CHUNK_SIZE = 10  # Process 10 events per document
+        documents = []
+        metadatas = []
+        ids = []
+        
+        for i in range(0, len(events), CHUNK_SIZE):
+            chunk = events[i:i + CHUNK_SIZE]
+            chunk_text = ""
+            
+            for event in chunk:
+                try:
+                    event_text = stringify_event(event)
+                    chunk_text += event_text + " "
+                except Exception as e:
+                    logging.error(f"Error processing event: {str(e)}")
+                    continue
+            
+            if chunk_text:
+                chunk_id = f"chunk_{i//CHUNK_SIZE}"
+                documents.append(chunk_text)
+                metadatas.append({
+                    "idx": i//CHUNK_SIZE,  # shorter key name
+                    "size": len(chunk),    # shorter key name
+                    "ts": datetime.now().strftime("%Y%m%d")  # compact date format
+                })
+                ids.append(chunk_id)
 
-        # Add as single document
-        if all_events_text:
+        # Add chunks to collection
+        if documents:
             collection.add(
-                documents=[all_events_text],
-                metadatas=[{
-                    "event_count": len(events),
-                    "last_updated": datetime.now().isoformat()
-                }],
-                ids=["all_events"]
+                documents=documents,
+                metadatas=metadatas,
+                ids=ids
             )
-            logging.info(f"Added combined document of {len(events)} events to collection")
+            logging.info(f"Added {len(documents)} chunks containing {len(events)} events to collection")
 
         return True
 
