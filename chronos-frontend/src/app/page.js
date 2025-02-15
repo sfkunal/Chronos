@@ -13,47 +13,6 @@ import { Loader2 } from "lucide-react";
 
 const manrope = Manrope({ subsets: ['latin'] })
 
-const DemoContent = ({ className, title }) => (
-    <div className={`p-4 border border-gray-200 rounded-lg bg-white shadow-sm ${className}`}>
-        <h1 className="text-2xl font-semibold text-gray-700 mb-2">{title}</h1>
-        <div className="w-full h-full min-h-[100px rounded flex items-center justify-center">
-            <span className="text-gray-500">{title} Content</span>
-        </div>
-    </div>
-);
-
-// For demonstration purposes, we'll create some sample events
-const generateSampleEvents = () => {
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-    return [
-        {
-            id: '1',
-            title: 'Team Meeting',
-            start: new Date(today.getTime() + 10 * 60 * 60 * 1000), // 10:00 AM
-            end: new Date(today.getTime() + 11 * 60 * 60 * 1000),   // 11:00 AM
-            color: '#3b82f6',
-            description: 'Weekly team sync'
-        },
-        {
-            id: '2',
-            title: 'Lunch Break',
-            start: new Date(today.getTime() + 12 * 60 * 60 * 1000), // 12:00 PM
-            end: new Date(today.getTime() + 13 * 60 * 60 * 1000),   // 1:00 PM
-            color: '#10b981',
-            description: 'Take a break!'
-        },
-        {
-            id: '3',
-            title: 'Client Call',
-            start: new Date(today.getTime() + 24 * 60 * 60 * 1000 + 14 * 60 * 60 * 1000), // Tomorrow 2:00 PM
-            end: new Date(today.getTime() + 24 * 60 * 60 * 1000 + 15 * 60 * 60 * 1000),   // Tomorrow 3:00 PM
-            color: '#f59e0b',
-            description: 'Discuss new project requirements'
-        }
-    ];
-};
 
 const transformGoogleEvents = (googleEvents) => {
     return googleEvents.map(event => ({
@@ -159,7 +118,6 @@ function CalendarPage() {
         } else {
             setIsLoading(true);
             timeoutId = setTimeout(() => {
-                setEvents(generateSampleEvents());
                 setIsLoading(false);
             }, 500);
         }
