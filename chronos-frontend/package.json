@@ -1,0 +1,22 @@
+{
+  "name": "chronos-frontend",
+  "version": "1.0.0",
+  "main": "dist/main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "tsc && cp src/index.html dist/",
+    "watch": "tsc -w",
+    "dev": "concurrently \"npm run watch\" \"npm run start\""
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "concurrently": "^8.2.2",
+    "electron": "^29.4.6",
+    "typescript": "^5.7.3"
+  }
+}
