@@ -4,6 +4,9 @@ from dotenv import load_dotenv
 from pydantic import BaseModel
 from datetime import datetime, timedelta
 import pytz
+import json
+from google_auth_oauthlib.flow import InstalledAppFlow
+from googleapiclient.discovery import build
 
 load_dotenv()
 
@@ -177,6 +180,7 @@ class SchedulingAgent:
         self.availability_agent = AvailabilityAgent(service)
         self.preferences_agent = PreferencesAgent()
         self.groq_client = Groq(api_key=os.getenv('GROQ_API_KEY'))
+        self.service = service
         pacific_tz = pytz.timezone('America/Los_Angeles')
         now = datetime.now(pacific_tz)
         current_date = now.strftime('%Y-%m-%d')
@@ -221,64 +225,187 @@ class SchedulingAgent:
         7. Always set reminders.useDefault to true
         8. ABOVE ALL, RESPECT THE AVAILABILITY PREFERENCES THAT A USER PROVIDES YOU""".format(current_date, current_time)
 
-    def process_request(self, action_query: str, preferences: list[str]):
-        intent = self.intent_agent.extract_intent(action_query)
-        preference_rules = self.preferences_agent.get_rule_based_preferences(preferences)
-        
-        if intent.intent in ["CREATE", "EDIT"]:
-            chat_completion = self.groq_client.chat.completions.create(
-                messages=[
-                    {
-                        "role": "system",
-                        "content": self.system_prompt
-                    },
-                    {
-                        "role": "user",
-                        "content": f"""Action: {action_query}
-                        User Preferences: {preference_rules}
-                        Current Availability: {self.availability_agent.get_two_week_availability() if self.availability_agent else 'Not available'}
-                        
-                        Generate a calendar event JSON that respects these preferences and availability."""
-                    }
-                ],
-                model="llama3-70b-8192",
-            )
+    def create_calendar_event(self, event_data):
+        """
+        Creates a Google Calendar event from either a JSON string or dictionary.
+        Returns the created event details or error message.
+        """
+        try:
+            # Handle input that could be either JSON string or dict
+            if isinstance(event_data, str):
+                # Clean up the JSON string
+                json_str = event_data.strip()
+                if "```" in json_str:
+                    json_str = json_str.split("```")[1].split("```")[0]
+                event_details = json.loads(json_str)
+            elif isinstance(event_data, dict):
+                event_details = event_data
+            else:
+                raise ValueError(f"Unexpected event data type: {type(event_data)}")
             
-            return chat_completion.choices[0].message.content
+            # Validate required fields
+            required_fields = ['summary', 'start', 'end']
+            for field in required_fields:
+                if field not in event_details:
+                    raise ValueError(f"Missing required field: {field}")
+            
+            # Create the event using Google Calendar API
+            event = self.service.events().insert(
+                calendarId='primary',
+                body=event_details
+            ).execute()
+            
+            return {
+                'status': 'success',
+                'event_id': event.get('id'),
+                'html_link': event.get('htmlLink'),
+                'summary': event.get('summary')
+            }
+            
+        except json.JSONDecodeError as e:
+            return {
+                'status': 'error',
+                'message': f'Failed to parse JSON: {str(e)}',
+                'raw_response': event_data
+            }
+        except ValueError as e:
+            return {
+                'status': 'error',
+                'message': str(e)
+            }
+        except Exception as e:
+            return {
+                'status': 'error',
+                'message': f'Failed to create event: {str(e)}'
+            }
+
+    def process_request(self, action_query: str, preferences: list[str]):
+        """Process a calendar request and return the event details"""
+        try:
+            intent = self.intent_agent.extract_intent(action_query)
+            preference_rules = self.preferences_agent.get_rule_based_preferences(preferences)
+            
+            if intent.intent in ["CREATE", "EDIT"]:
+                chat_completion = self.groq_client.chat.completions.create(
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": self.system_prompt
+                        },
+                        {
+                            "role": "user",
+                            "content": f"""Action: {action_query}
+                            User Preferences: {preference_rules}
+                            Current Availability: {self.availability_agent.get_two_week_availability() if self.availability_agent else 'Not available'}
+                            
+                            Generate a calendar event JSON that respects these preferences and availability.
+                            Remember to include:
+                            1. Start and end times in ISO format with timezone
+                            2. Summary and description
+                            3. Attendee emails if provided
+                            4. Default 1 hour duration"""
+                        }
+                    ],
+                    model="llama3-70b-8192",
+                )
+                
+                llm_response = chat_completion.choices[0].message.content
+                print("Raw LLM Response:", llm_response)  # Debug print
+                
+                # Parse and validate the response
+                try:
+                    # Clean up the JSON string
+                    if isinstance(llm_response, str):
+                        json_str = llm_response.strip()
+                        if "```json" in json_str:
+                            json_str = json_str.split("```json")[1].split("```")[0]
+                        elif "```" in json_str:
+                            json_str = json_str.split("```")[1].split("```")[0]
+                        event_details = json.loads(json_str)
+                    else:
+                        event_details = llm_response
+
+                    # Validate required fields
+                    required_fields = ['summary', 'start', 'end']
+                    missing_fields = [field for field in required_fields if field not in event_details]
+                    if missing_fields:
+                        raise ValueError(f"Missing required fields: {', '.join(missing_fields)}")
+
+                    # Validate start and end have dateTime
+                    if 'dateTime' not in event_details['start'] or 'dateTime' not in event_details['end']:
+                        raise ValueError("Start and end must include dateTime")
+
+                    # Ensure timeZone is present
+                    event_details['start']['timeZone'] = 'America/Los_Angeles'
+                    event_details['end']['timeZone'] = 'America/Los_Angeles'
+
+                    # Ensure reminders are set
+                    if 'reminders' not in event_details:
+                        event_details['reminders'] = {'useDefault': True}
+
+                    # Process attendees if email is in the query
+                    if 'attendees' not in event_details:
+                        event_details['attendees'] = []
+                        import re
+                        emails = re.findall(r'[\w\.-]+@[\w\.-]+\.\w+', action_query)
+                        for email in emails:
+                            event_details['attendees'].append({'email': email})
+
+                    return event_details
+
+                except json.JSONDecodeError as e:
+                    return {
+                        'status': 'error',
+                        'message': f'Invalid JSON response from LLM: {str(e)}',
+                        'raw_response': llm_response
+                    }
+                except ValueError as e:
+                    return {
+                        'status': 'error',
+                        'message': str(e),
+                        'raw_response': llm_response
+                    }
+            
+            elif intent.intent == "DELETE":
+                return {"action": "delete", "query": action_query}
+            
+            else:
+                return {"error": "Unknown intent"}
+                
+        except Exception as e:
+            return {
+                'status': 'error',
+                'message': f'Failed to process request: {str(e)}',
+                'traceback': str(e.__traceback__)
+            }
+
+# Update the test code
+if __name__ == "__main__":
+    try:
+        SCOPES = ['https://www.googleapis.com/auth/calendar']
+        flow = InstalledAppFlow.from_client_secrets_file('client_secret.json', SCOPES)
+        creds = flow.run_local_server(port=8080)
+        service = build('calendar', 'v3', credentials=creds)
+
+        scheduling_agent = SchedulingAgent(service)
         
-        elif intent.intent == "DELETE":
-            # For delete operations, we'll need to implement search functionality
-            # to find the specific event to delete
-            return {"action": "delete", "query": action_query}
+        # Get the event details first
+        event_details = scheduling_agent.process_request(
+            "Schedule lunch with Connor (connorchan4@gmail.com) next Wednesday at noon", 
+            ["I only take lunch meetings between 12-2pm", "No meetings on Fridays"]
+        )
         
+        print("Processed event details:", event_details)
+        
+        # Check for errors in the event details
+        if isinstance(event_details, dict) and event_details.get('status') == 'error':
+            print("Error in processing request:", event_details['message'])
+            if 'raw_response' in event_details:
+                print("Raw LLM response:", event_details['raw_response'])
         else:
-            return {"error": "Unknown intent"}
-
-# intent_agent = IntentAgent()
-
-# for i in range(10):
-#     print(intent_agent.extract_intent(sample_action_query))
-
-from google_auth_oauthlib.flow import InstalledAppFlow
-from googleapiclient.discovery import build
-
-SCOPES = ['https://www.googleapis.com/auth/calendar']
-flow = InstalledAppFlow.from_client_secrets_file('client_secret.json', SCOPES)
-creds = flow.run_local_server(port=8080)
-service = build('calendar', 'v3', credentials=creds)
-
-# availability = AvailabilityAgent(service)
-# availability = scheduling_agent.get_two_week_availability()
-# print(availability)
-
-# preferences_agent = PreferencesAgent()
-# rules = preferences_agent.get_rule_based_preferences(sample_preferences)
-# print(rules)
-
-scheduling_agent = SchedulingAgent(service)  # service is your Google Calendar service
-result = scheduling_agent.process_request(
-    "Schedule lunch with Connor next Wednesday at noon", 
-    ["I only take lunch meetings between 12-2pm", "No meetings on Fridays"]
-)
-
-print(result)
+            # Create the calendar event only if we have valid event details
+            response = scheduling_agent.create_calendar_event(event_details)
+            print("Create calendar event response:", response)
+        
+    except Exception as e:
+        print(f"Error in main execution: {str(e)}")

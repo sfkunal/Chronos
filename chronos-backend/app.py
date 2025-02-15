@@ -6,6 +6,7 @@ from google_auth_oauthlib.flow import Flow
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
 from datetime import datetime, timedelta
+from groq_engine import SchedulingAgent
 # from search_engine import stringify_event, update_events_in_chroma, search_events
 
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'  # Allow HTTP connections in development
@@ -14,7 +15,13 @@ os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'  # Allow OAuth2 over HTTP for de
 
 app = Flask(__name__)
 app.secret_key = 'thisisSECRET1340iu5203u5103'
-CORS(app, supports_credentials=True)
+
+# Simpler CORS configuration
+CORS(app, 
+     origins=["http://localhost:3000"],
+     supports_credentials=True,
+     allow_headers=["Content-Type"],
+     methods=["GET", "POST", "OPTIONS"])
 
 SCOPES = [
     'https://www.googleapis.com/auth/calendar',
@@ -87,8 +94,9 @@ class CalendarAPI:
         
         return events_result.get('items', [])
 
-# Create global instance
+# Create global instances
 calendar_api = CalendarAPI()
+scheduling_agent = None  # Will be initialized after authentication
 
 @app.route('/')
 def hello_world():
@@ -100,12 +108,12 @@ def login():
     if auth_url:
         session['state'] = calendar_api.auth_state
         return redirect(auth_url)
-    return redirect('http://localhost:3000/lee')
+    return redirect('http://localhost:3000')
 
 @app.route('/callback')
 def callback():
     calendar_api.login_callback(request.url)
-    return redirect('http://localhost:3000/lee')
+    return redirect('http://localhost:3000')
 
 @app.route('/api/events', methods=['GET'])
 def get_events():
@@ -158,6 +166,67 @@ def get_events():
 def auth_status():
     is_authenticated = calendar_api.creds and calendar_api.creds.valid
     return jsonify({'isAuthenticated': is_authenticated})
+
+@app.route('/api/schedule', methods=['POST'])
+def schedule_event():
+    # Add CORS headers explicitly
+    response_headers = {
+        'Access-Control-Allow-Origin': 'http://localhost:3000',
+        'Access-Control-Allow-Credentials': 'true'
+    }
+    
+    # Handle preflight request
+    if request.method == 'OPTIONS':
+        return ('', 204, response_headers)
+
+    if not calendar_api.service:
+        return jsonify({
+            'status': 'error',
+            'message': 'Not authenticated'
+        }), 401, response_headers
+
+    try:
+        data = request.get_json()
+        
+        if not data or 'action_query' not in data or 'preferences' not in data:
+            return jsonify({
+                'status': 'error',
+                'message': 'Missing required fields: action_query and preferences'
+            }), 400, response_headers
+
+        # Initialize scheduling agent if needed
+        global scheduling_agent
+        if scheduling_agent is None:
+            scheduling_agent = SchedulingAgent(calendar_api.service)
+        
+        # Process the scheduling request
+        event_details = scheduling_agent.process_request(
+            data['action_query'],
+            data['preferences']
+        )
+        
+        # Check for errors in event details
+        if isinstance(event_details, dict) and event_details.get('status') == 'error':
+            return jsonify({
+                'status': 'error',
+                'message': event_details['message'],
+                'details': event_details.get('raw_response', '')
+            }), 400, response_headers
+            
+        # Create the calendar event
+        response = scheduling_agent.create_calendar_event(event_details)
+        
+        # Add headers to responses
+        if response.get('status') == 'error':
+            return jsonify(response), 400, response_headers
+            
+        return jsonify(response), 200, response_headers
+
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': f'Failed to process scheduling request: {str(e)}'
+        }), 500, response_headers
 
 if __name__ == '__main__':
     app.run(debug=True, use_reloader=True, port=5000)
