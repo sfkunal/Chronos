@@ -159,9 +159,7 @@ function CalendarPage() {
     };
 
     return (
-        <div className="container mx-auto py-8">
-            <h1 className="text-2xl font-bold mb-4">Weekly Calendar</h1>
-
+        <div className="container h-full pt-[2%]">
             <WeeklyCalendar events={events} onEventClick={handleEventClick} />
 
             {selectedEvent && (
@@ -192,7 +190,7 @@ const PageLayout = () => {
     const [date, setDate] = React.useState(new Date())
     return (
         <div className={manrope.className}>
-            <div className="min-h-screen bg-gray-100">
+            <div className="min-h-screen bg-white-100">
                 <div className="w-full">
                     {/* Main Grid Layout */}
                     <div className="grid grid-cols-12 gap-4">
@@ -200,8 +198,7 @@ const PageLayout = () => {
                         {/* Left Column aka Month Calendar View + Preferences */}
                         <div className="col-span-2 h-screen">
                             {/* Top Left Month Calendar View */}
-                            {/* TODO: Show current date + week highlighted */}
-                            <div className="h-[33vh] pl-2">
+                            <div className="h-[35vh]">
                                 <Calendar
                                     mode="single"
                                     selected={date}
@@ -211,14 +208,14 @@ const PageLayout = () => {
                             </div>
 
                             {/* Preferences */}``
-                            <div className="h-[67vh]">
+                            <div className="h-[65vh]">
                                 <Preferences />
                             </div>
                         </div>
 
                         {/* Middle Column aka Main Calendar View */}
-                        <div className="col-span-7">
-                            <CalendarPage className />
+                        <div className="col-span-7 h-screen">
+                            <CalendarPage />
                         </div>
 
                         {/* Right Column aka Chronos Chatbot */}

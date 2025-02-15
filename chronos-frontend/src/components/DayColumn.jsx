@@ -3,7 +3,7 @@ import Event from './Event';
 
 const DayColumn = ({ events, onEventClick }) => {
     return (
-        <div className="flex-1 relative border-r last:border-r-0 min-w-[120px]">
+        <div className="flex-1 relative border-r last:border-r-0">
             {/* Render hour guidelines */}
             {Array.from({ length: 24 }).map((_, i) => (
                 <div

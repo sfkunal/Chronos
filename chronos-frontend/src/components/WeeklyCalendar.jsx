@@ -32,10 +32,35 @@ const WeeklyCalendar = ({ events, onEventClick }) => {
     });
 
     return (
-        <div className="w-full h-[600px] flex flex-col border rounded-md overflow-hidden">
+        <div className="w-full h-full flex flex-col overflow-hidden">
+            <div className="flex justify-between items-center mb-4 px-4">
+                <h1 className="text-4xl font-bold mb-4">
+                    <span className="font-bold">{format(currentDate, 'MMMM')}</span>
+                    <span className="font-normal"> {format(currentDate, 'yyyy')}</span></h1>
+                <div className="flex items-center justify-end px-4 py-2 bg-white-50">
+                    <div className="relative">
+                        <input
+                            type="text"
+                            placeholder="Search events..."
+                            className="pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-64"
+                        />
+                        <svg
+                            className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400"
+                            fill="none"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
             {/* Header with navigation and week display */}
-            <div className="flex items-center justify-between px-4 py-2 bg-gray-50 border-b">
-                <div className="flex items-center gap-2">
+            <div className="flex items-center justify-end px-4 py-2 bg-white-50 border-b">
+                <div className="flex items-center gap-1">
                     <Button
                         variant="outline"
                         size="icon"
@@ -45,33 +70,34 @@ const WeeklyCalendar = ({ events, onEventClick }) => {
                     </Button>
                     <Button
                         variant="outline"
+                        onClick={() => setCurrentDate(new Date())}
+                    >
+                        Today
+                    </Button>
+                    <Button
+                        variant="outline"
                         size="icon"
                         onClick={() => navigateWeek('next')}
                     >
                         <ChevronRight className="h-4 w-4" />
                     </Button>
-                    <span className="font-medium ml-2">
-                        Week of {format(weekStart, 'MMM d, yyyy')}
-                    </span>
                 </div>
-                <Button
-                    variant="outline"
-                    onClick={() => setCurrentDate(new Date())}
-                >
-                    Today
-                </Button>
             </div>
 
             {/* Days header */}
-            <div className="flex border-b bg-gray-50">
+            <div className="flex border-b bg-white-50">
                 <div className="w-16 flex-shrink-0 border-r" />
                 {days.map((day, i) => {
                     const date = addWeeks(weekStart, 0);
                     date.setDate(weekStart.getDate() + i);
+                    const isToday = format(date, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
+
                     return (
                         <div key={i} className="flex-1 text-center py-2 border-r last:border-r-0">
-                            <div className="font-medium">{day}</div>
-                            <div className="text-sm text-gray-500">
+                            <div className={`font-medium ${isToday ? 'text-blue-600' : ''}`}>
+                                {day}
+                            </div>
+                            <div className={`text-sm ${isToday ? 'text-blue-600 font-medium' : 'text-gray-500'}`}>
                                 {format(date, 'MMM d')}
                             </div>
                         </div>
@@ -89,8 +115,7 @@ const WeeklyCalendar = ({ events, onEventClick }) => {
                                 <DayColumn
                                     key={i}
                                     events={eventsByDay[i]}
-                                    onEventClick={onEventClick}
-                                />
+                                    onEventClick={onEventClick} />
                             ))}
                         </div>
                     </div>

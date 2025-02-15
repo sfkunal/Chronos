@@ -26,30 +26,30 @@ const generateSampleEvents = () => {
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
   return [
-      {
-          id: '1',
-          title: 'Team Meeting',
-          start: new Date(today.getTime() + 10 * 60 * 60 * 1000), // 10:00 AM
-          end: new Date(today.getTime() + 11 * 60 * 60 * 1000),   // 11:00 AM
-          color: '#3b82f6',
-          description: 'Weekly team sync'
-      },
-      {
-          id: '2',
-          title: 'Lunch Break',
-          start: new Date(today.getTime() + 12 * 60 * 60 * 1000), // 12:00 PM
-          end: new Date(today.getTime() + 13 * 60 * 60 * 1000),   // 1:00 PM
-          color: '#10b981',
-          description: 'Take a break!'
-      },
-      {
-          id: '3',
-          title: 'Client Call',
-          start: new Date(today.getTime() + 24 * 60 * 60 * 1000 + 14 * 60 * 60 * 1000), // Tomorrow 2:00 PM
-          end: new Date(today.getTime() + 24 * 60 * 60 * 1000 + 15 * 60 * 60 * 1000),   // Tomorrow 3:00 PM
-          color: '#f59e0b',
-          description: 'Discuss new project requirements'
-      }
+    {
+      id: '1',
+      title: 'Team Meeting',
+      start: new Date(today.getTime() + 10 * 60 * 60 * 1000), // 10:00 AM
+      end: new Date(today.getTime() + 11 * 60 * 60 * 1000),   // 11:00 AM
+      color: '#3b82f6',
+      description: 'Weekly team sync'
+    },
+    {
+      id: '2',
+      title: 'Lunch Break',
+      start: new Date(today.getTime() + 12 * 60 * 60 * 1000), // 12:00 PM
+      end: new Date(today.getTime() + 13 * 60 * 60 * 1000),   // 1:00 PM
+      color: '#10b981',
+      description: 'Take a break!'
+    },
+    {
+      id: '3',
+      title: 'Client Call',
+      start: new Date(today.getTime() + 24 * 60 * 60 * 1000 + 14 * 60 * 60 * 1000), // Tomorrow 2:00 PM
+      end: new Date(today.getTime() + 24 * 60 * 60 * 1000 + 15 * 60 * 60 * 1000),   // Tomorrow 3:00 PM
+      color: '#f59e0b',
+      description: 'Discuss new project requirements'
+    }
   ];
 };
 
@@ -90,19 +90,19 @@ function CalendarPage() {
   const [authToken, setAuthToken] = React.useState(null);
 
   useEffect(() => {
-  const params = new URLSearchParams(window.location.search);
-  const token = params.get('token');
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token');
 
-  if (token) {
+    if (token) {
       localStorage.setItem('authToken', token);
       window.history.replaceState({}, '', '/lee');
       setAuthToken(token);
-  } else {
+    } else {
       const savedToken = localStorage.getItem('authToken');
       if (savedToken) {
-      setAuthToken(savedToken);
+        setAuthToken(savedToken);
       }
-  }
+    }
   }, []);
 
   useEffect(() => {
@@ -111,15 +111,15 @@ function CalendarPage() {
         const authResponse = await fetch('http://127.0.0.1:5000/api/auth-status', {
           credentials: 'include'
         });
-        
+
         if (authResponse.ok) {
           const authData = await authResponse.json();
-          
+
           if (authData.isAuthenticated) {
             const eventsResponse = await fetch('http://127.0.0.1:5000/api/events', {
               credentials: 'include'
             });
-            
+
             if (eventsResponse.ok) {
               const eventsData = await eventsResponse.json();
               setEvents1(eventsData.events);
@@ -155,35 +155,35 @@ function CalendarPage() {
   console.log('Calendar Events:', events1);
 
   const handleEventClick = (event) => {
-      setSelectedEvent(event);
+    setSelectedEvent(event);
   };
 
   return (
-      <div className="container mx-auto py-8">
-          <h1 className="text-2xl font-bold mb-4">Weekly Calendar</h1>
+    <div className="container mx-auto py-8">
+      <h1 className="text-2xl font-bold mb-4">Weekly Calendar</h1>
 
-          <WeeklyCalendar events={events} onEventClick={handleEventClick} />
+      <WeeklyCalendar events={events} onEventClick={handleEventClick} />
 
-          {selectedEvent && (
-              <Dialog open={!!selectedEvent} onOpenChange={(open) => !open && setSelectedEvent(null)}>
-                  <DialogContent>
-                      <DialogHeader>
-                          <DialogTitle>{selectedEvent.title}</DialogTitle>
-                      </DialogHeader>
-                      <div className="py-4">
-                          <p><strong>Time:</strong> {selectedEvent.start.toLocaleString()} - {selectedEvent.end.toLocaleString()}</p>
-                          {selectedEvent.description && (
-                              <p className="mt-2">{selectedEvent.description}</p>
-                          )}
-                      </div>
-                      <div className="flex justify-end gap-2">
-                          <Button variant="outline" onClick={() => setSelectedEvent(null)}>Close</Button>
-                          <Button variant="destructive">Delete Event</Button>
-                      </div>
-                  </DialogContent>
-              </Dialog>
-          )}
-      </div>
+      {selectedEvent && (
+        <Dialog open={!!selectedEvent} onOpenChange={(open) => !open && setSelectedEvent(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{selectedEvent.title}</DialogTitle>
+            </DialogHeader>
+            <div className="py-4">
+              <p><strong>Time:</strong> {selectedEvent.start.toLocaleString()} - {selectedEvent.end.toLocaleString()}</p>
+              {selectedEvent.description && (
+                <p className="mt-2">{selectedEvent.description}</p>
+              )}
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setSelectedEvent(null)}>Close</Button>
+              <Button variant="destructive">Delete Event</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+    </div>
   );
 }
 
@@ -209,7 +209,7 @@ const PageLayout = () => {
                   className="h-full"
                 />
               </div>
-              
+
               {/* Preferences */}``
               <div className="h-[67vh]">
                 <Preferences />
@@ -218,13 +218,13 @@ const PageLayout = () => {
 
             {/* Middle Column aka Main Calendar View */}
             <div className="col-span-7">
-              <CalendarPage className/>
+              <CalendarPage className />
             </div>
-            
+
             {/* Right Column aka Chronos Chatbot */}
             <div className="col-span-3 h-screen pt-[10vh]">
-              <DemoContent 
-                title="Chronos" 
+              <DemoContent
+                title="Chronos"
                 className="h-[90vh] bg-[#E4E4E4] rounded-xl"
               />
             </div>

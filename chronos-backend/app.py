@@ -8,6 +8,8 @@ from googleapiclient.discovery import build
 from datetime import datetime, timedelta
 # from search_engine import stringify_event, update_events_in_chroma
 
+os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'  # Allow OAuth2 over HTTP for development
+
 app = Flask(__name__)
 app.secret_key = 'thisisSECRET1340iu5203u5103'
 CORS(app, supports_credentials=True)
