@@ -16,10 +16,10 @@ const ChatInterface = ({ onSubmit }) => {
         if (newMessage.trim() === '') return;
 
         // Add user message to chat
-        const userMessage = { 
-            id: messages.length + 1, 
-            text: newMessage, 
-            isUser: true 
+        const userMessage = {
+            id: messages.length + 1,
+            text: newMessage,
+            isUser: true
         };
         setMessages(prev => [...prev, userMessage]);
 
