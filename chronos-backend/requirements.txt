@@ -11,3 +11,4 @@ instructor
 pydantic
 pytz
 datetime
+chromadb

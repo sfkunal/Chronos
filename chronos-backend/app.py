@@ -6,6 +6,7 @@ from google_auth_oauthlib.flow import Flow
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
 from datetime import datetime, timedelta
+# from search_engine import stringify_event, update_events_in_chroma
 
 app = Flask(__name__)
 app.secret_key = 'thisisSECRET1340iu5203u5103'
@@ -85,6 +86,10 @@ class CalendarAPI:
 # Create global instance
 calendar_api = CalendarAPI()
 
+@app.route('/')
+def hello_world():
+    return "hello world"
+
 @app.route('/login')
 def login():
     auth_url = calendar_api.login()
@@ -103,7 +108,23 @@ def get_events():
     events = calendar_api.get_events()
     if events is None:
         return jsonify({'error': 'Not authenticated'}), 401
+    
+    print("Events retrieved from Google Calendar")
+    
+    # try:
+    #     success = update_events_in_chroma(events)
+    #     if not success:
+    #         return jsonify({'error': 'Failed to update search index'}), 500
+    #     print("Events successfully updated in Chroma")
+    # except Exception as e:
+    #     print(f"Error updating events in Chroma: {str(e)}")
+    #     return jsonify({'error': f'Failed to update search index: {str(e)}'}), 500
+    # print("Events successfully updated in Chroma")
+
     return jsonify({'events': events})
+
+# @app.route('/api/search', methods=['GET'])
+# def search_calendar():
 
 @app.route('/api/auth-status', methods=['GET'])
 def auth_status():
