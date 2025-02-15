@@ -100,12 +100,12 @@ def login():
     if auth_url:
         session['state'] = calendar_api.auth_state
         return redirect(auth_url)
-    return redirect('http://localhost:3000/lee')
+    return redirect('http://localhost:3000')
 
 @app.route('/callback')
 def callback():
     calendar_api.login_callback(request.url)
-    return redirect('http://localhost:3000/lee')
+    return redirect('http://localhost:3000')
 
 @app.route('/api/events', methods=['GET'])
 def get_events():
