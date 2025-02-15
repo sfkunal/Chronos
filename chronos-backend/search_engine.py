@@ -10,25 +10,108 @@ logging.basicConfig(level=logging.INFO)
 
 dotenv.load_dotenv()
 
-# Use SentenceTransformer for better embeddings
-embedder = SentenceTransformerEmbeddingFunction(model_name="all-MiniLM-L6-v2")
+class SearchEngine:
+    def __init__(self):
+        self.client = None
+        self.embedder = None
+        self.collection = None
+        self.initialize()
 
-client = chromadb.HttpClient(
-    ssl=True,
-    host='api.trychroma.com',
-    tenant='eeeaf9e6-bf44-43c7-9409-46d930556a39',
-    database='Chronos',
-    headers={
-        'x-chroma-token': os.getenv('CHROMA_API_KEY')
-    }
-)
+    def initialize(self):
+        try:
+            logging.info(f"Initializing ChromaDB version: {chromadb.__version__}")
+            self.client = chromadb.HttpClient(
+                ssl=True,
+                host='api.trychroma.com',
+                tenant='eeeaf9e6-bf44-43c7-9409-46d930556a39',
+                database='Chronos',
+                headers={
+                    'x-chroma-token': os.getenv('CHROMA_API_KEY')
+                }
+            )
+            
+            # Test the connection and log server version
+            heartbeat = self.client.heartbeat()
+            logging.info(f"Connected to ChromaDB server. Heartbeat: {heartbeat}")
+            
+            self.embedder = SentenceTransformerEmbeddingFunction(model_name="all-MiniLM-L6-v2")
+            self.collection = self.client.get_or_create_collection(
+                name="calendar_events",
+                embedding_function=self.embedder
+            )
+            logging.info("Successfully initialized ChromaDB connection")
+        except Exception as e:
+            logging.error(f"Failed to initialize ChromaDB: {str(e)}")
+            raise
 
-# Create or get the collection with the embedding function
-collection = client.get_or_create_collection(
-    name="calendar_events",
-    metadata={"hnsw:space": "l2"},
-    embedding_function=embedder
-)
+    def update_events_in_chroma(self, events):
+        try:
+            existing = self.collection.get()
+            if existing and existing['ids']:
+                self.collection.delete(ids=existing['ids'])
+                logging.info(f"Cleared {len(existing['ids'])} existing events from collection")
+
+            CHUNK_SIZE = 10
+            documents = []
+            metadatas = []
+            ids = []
+            
+            for i in range(0, len(events), CHUNK_SIZE):
+                chunk = events[i:i + CHUNK_SIZE]
+                chunk_text = ""
+                
+                for event in chunk:
+                    try:
+                        event_text = stringify_event(event)
+                        chunk_text += event_text + " "
+                    except Exception as e:
+                        logging.error(f"Error processing event: {str(e)}")
+                        continue
+                
+                if chunk_text:
+                    chunk_id = f"chunk_{i//CHUNK_SIZE}"
+                    documents.append(chunk_text)
+                    metadatas.append({
+                        "idx": i//CHUNK_SIZE,
+                        "size": len(chunk),
+                        "ts": datetime.now().strftime("%Y%m%d")
+                    })
+                    ids.append(chunk_id)
+
+            if documents:
+                self.collection.add(
+                    documents=documents,
+                    metadatas=metadatas,
+                    ids=ids
+                )
+                logging.info(f"Added {len(documents)} chunks containing {len(events)} events to collection")
+
+            return True
+
+        except Exception as e:
+            logging.error(f"Error in update_events_in_chroma: {str(e)}")
+            return False
+
+    def search_events(self, query_text, n_results=5):
+        try:
+            results = self.collection.query(
+                query_texts=[query_text],
+                n_results=n_results
+            )
+            return results
+        except Exception as e:
+            logging.error(f"Error in search_events: {str(e)}")
+            return None
+
+# Create a singleton instance
+search_engine = SearchEngine()
+
+# Export the methods to maintain backwards compatibility
+def update_events_in_chroma(events):
+    return search_engine.update_events_in_chroma(events)
+
+def search_events(query_text, n_results=5):
+    return search_engine.search_events(query_text, n_results)
 
 def stringify_event(event):
     parts = []
@@ -67,148 +150,3 @@ def stringify_event(event):
         parts.append(f"with description: {event['description']}")
     
     return ' '.join(parts) + ". "
-
-def update_events_in_chroma(events):
-    try:
-        # Get all existing IDs first
-        existing = collection.get()
-        if existing and existing['ids']:
-            collection.delete(ids=existing['ids'])
-            logging.info(f"Cleared {len(existing['ids'])} existing events from collection")
-
-        # Process events in smaller chunks
-        CHUNK_SIZE = 10  # Process 10 events per document
-        documents = []
-        metadatas = []
-        ids = []
-        
-        for i in range(0, len(events), CHUNK_SIZE):
-            chunk = events[i:i + CHUNK_SIZE]
-            chunk_text = ""
-            
-            for event in chunk:
-                try:
-                    event_text = stringify_event(event)
-                    chunk_text += event_text + " "
-                except Exception as e:
-                    logging.error(f"Error processing event: {str(e)}")
-                    continue
-            
-            if chunk_text:
-                chunk_id = f"chunk_{i//CHUNK_SIZE}"
-                documents.append(chunk_text)
-                metadatas.append({
-                    "idx": i//CHUNK_SIZE,  # shorter key name
-                    "size": len(chunk),    # shorter key name
-                    "ts": datetime.now().strftime("%Y%m%d")  # compact date format
-                })
-                ids.append(chunk_id)
-
-        # Add chunks to collection
-        if documents:
-            collection.add(
-                documents=documents,
-                metadatas=metadatas,
-                ids=ids
-            )
-            logging.info(f"Added {len(documents)} chunks containing {len(events)} events to collection")
-
-        return True
-
-    except Exception as e:
-        logging.error(f"Error in update_events_in_chroma: {str(e)}")
-        return False
-
-def search_events(query_text, n_results=5):
-    try:
-        results = collection.query(
-            query_texts=[query_text],
-            n_results=n_results
-        )
-        return results
-    except Exception as e:
-        logging.error(f"Error in search_events: {str(e)}")
-        return None
-
-# if __name__ == '__main__':
-#     test_event = {
-#         "attendees": [
-#             {
-#                 "displayName": "carsus🧐",
-#                 "email": "haverdac@gmail.com",
-#                 "responseStatus": "needsAction"
-#             },
-#             {
-#                 "email": "olliecrank@gmail.com",
-#                 "responseStatus": "needsAction"
-#             },
-#             {
-#                 "email": "kunalsr@uw.edu",
-#                 "organizer": True,
-#                 "responseStatus": "accepted",
-#                 "self": True
-#             },
-#             {
-#                 "displayName": "Connor Chan",
-#                 "email": "connorchansf@gmail.com",
-#                 "responseStatus": "needsAction"
-#             },
-#             {
-#                 "displayName": "Bob Watson",
-#                 "email": "rdwatson02@gmail.com",
-#                 "responseStatus": "accepted"
-#             },
-#             {
-#                 "email": "aidanhong123@gmail.com",
-#                 "responseStatus": "needsAction"
-#             },
-#             {
-#                 "email": "nelsonm1@uw.edu",
-#                 "responseStatus": "needsAction"
-#             },
-#             {
-#                 "email": "sarveshbala03@gmail.com",
-#                 "responseStatus": "needsAction"
-#             }
-#         ],
-#         "colorId": "6",
-#         "created": "2025-01-01T06:18:33.000Z",
-#         "creator": {
-#             "email": "kunalsr@uw.edu",
-#             "self": True
-#         },
-#         "end": {
-#             "dateTime": "2025-02-08T12:00:00-08:00",
-#             "timeZone": "America/Los_Angeles"
-#         },
-#         "etag": "\"3478076805034000\"",
-#         "eventType": "default",
-#         "guestsCanModify": True,
-#         "htmlLink": "https://www.google.com/calendar/event?eid=MWQzMzkzZDhiMmYwNGI1Mzk1MWMxZGFlZTRmNjBkMjFfMjAyNTAyMDhUMTkwMDAwWiBrdW5hbHNyQHV3LmVkdQ",
-#         "iCalUID": "1d3393d8b2f04b53951c1daee4f60d21@google.com",
-#         "id": "1d3393d8b2f04b53951c1daee4f60d21_20250208T190000Z",
-#         "kind": "calendar#event",
-#         "location": "University of Washington Golf Range, 2800 NE Clark Rd, Seattle, WA 98195, USA",
-#         "organizer": {
-#             "email": "kunalsr@uw.edu",
-#             "self": True
-#         },
-#         "originalStartTime": {
-#             "dateTime": "2025-02-08T11:00:00-08:00",
-#             "timeZone": "America/Los_Angeles"
-#         },
-#         "recurringEventId": "1d3393d8b2f04b53951c1daee4f60d21",
-#         "reminders": {
-#             "useDefault": True
-#         },
-#         "sequence": 2,
-#         "start": {
-#             "dateTime": "2025-02-08T11:00:00-08:00",
-#             "timeZone": "America/Los_Angeles"
-#         },
-#         "status": "confirmed",
-#         "summary": "Weekly Golf",
-#         "updated": "2025-02-08T18:13:22.517Z"
-#     }
-    
-#     print(stringify_event(test_event))

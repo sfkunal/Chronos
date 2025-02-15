@@ -11,4 +11,5 @@ instructor
 pydantic
 pytz
 datetime
-chromadb
+chromadb==0.6.3
+sentence-transformers>=2.2.2

@@ -7,11 +7,9 @@ from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
 from datetime import datetime, timedelta
 from groq_engine import SchedulingAgent
-# from search_engine import stringify_event, update_events_in_chroma, search_events
+from search_engine import stringify_event, update_events_in_chroma, search_events
 
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'  # Allow HTTP connections in development
-
-os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'  # Allow OAuth2 over HTTP for development
 
 app = Flask(__name__)
 app.secret_key = 'thisisSECRET1340iu5203u5103'
@@ -141,44 +139,43 @@ def get_events():
     
     print("Events retrieved from Google Calendar")
     
-    # try:
-    #     success = update_events_in_chroma(events)
-    #     if not success:
-    #         return jsonify({'error': 'Failed to update search index'}), 500
-    #     print("Events successfully updated in Chroma")
-    # except Exception as e:
-    #     print(f"Error updating events in Chroma: {str(e)}")
-    #     return jsonify({'error': f'Failed to update search index: {str(e)}'}), 500
+    try:
+        success = update_events_in_chroma(events)
+        if not success:
+            return jsonify({'error': 'Failed to update search index'}), 500
+        print("Events successfully updated in Chroma")
+    except Exception as e:
+        print(f"Error updating events in Chroma: {str(e)}")
+        return jsonify({'error': f'Failed to update search index: {str(e)}'}), 500
 
     return jsonify({'events': events})
 
-# @app.route('/api/search', methods=['GET'])
-# def search_calendar():
-#     query = request.args.get('q')
-#     if not query:
-#         return jsonify({'error': 'No search query provided'}), 400
+@app.route('/api/search', methods=['GET'])
+def search_calendar():
+    query = request.args.get('q')
+    if not query:
+        return jsonify({'error': 'No search query provided'}), 400
 
-#     # Get number of results from query params, default to 5
-#     n_results = int(request.args.get('n', 5))
+    # Get number of results from query params, default to 5
+    n_results = int(request.args.get('n', 5))
     
-#     try:
-#         search_results = search_events(query, n_results)
-#         if search_results is None:
-#             return jsonify({'error': 'Search failed'}), 500
+    try:
+        search_results = search_events(query, n_results)
+        if search_results is None:
+            return jsonify({'error': 'Search failed'}), 500
             
-#         # Format the response
-#         response = {
-#             'query': query,
-#             'matches': search_results['documents'][0],  # List of matching document texts
-#             'distances': search_results['distances'][0], # Similarity scores
-#             'metadatas': search_results['metadatas'][0] # Metadata for each match
-#         }
+        # Format the response
+        response = {
+            'query': query,
+            'matches': search_results['documents'][0],  # List of matching document texts
+            'distances': search_results['distances'][0], # Similarity scores
+        }
         
-#         return jsonify(response)
+        return jsonify(response)
         
-#     except Exception as e:
-#         print(f"Error during search: {str(e)}")
-#         return jsonify({'error': f'Search failed: {str(e)}'}), 500
+    except Exception as e:
+        print(f"Error during search: {str(e)}")
+        return jsonify({'error': f'Search failed: {str(e)}'}), 500
 
 @app.route('/api/auth-status', methods=['GET'])
 def auth_status():
@@ -246,53 +243,6 @@ def schedule_event():
             'message': f'Failed to process scheduling request: {str(e)}'
         }), 500, response_headers
 
-# @app.route('/api/contacts', methods=['GET'])
-# def get_contacts():
-#     query = request.args.get('q')  # Get search query from URL params
-#     contacts = calendar_api.get_contacts(query=query)
-#     if contacts is None:
-#         return jsonify({'error': 'Not authenticated'}), 401
-    
-#     # Format contacts for frontend
-#     formatted_contacts = []
-#     for contact in contacts:
-#         # Skip contacts without email addresses
-#         if not contact.get('emailAddresses'):
-#             continue
-            
-#         formatted_contact = {
-#             'resourceName': contact.get('resourceName'),
-#             'names': contact.get('names', []),
-#             'emailAddresses': contact.get('emailAddresses', []),
-#             'phoneNumbers': contact.get('phoneNumbers', [])
-#         }
-#         formatted_contacts.append(formatted_contact)
-    
-#     return jsonify({'contacts': formatted_contacts})
-
-# @app.route('/api/email-lookup', methods=['GET'])
-# def email_lookup():
-#     query = request.args.get('q')
-#     if not query:
-#         return jsonify({'error': 'No search query provided'}), 400
-        
-#     contacts = calendar_api.get_contacts(query=query)
-#     if contacts is None:
-#         return jsonify({'error': 'Not authenticated'}), 401
-    
-#     email_matches = []
-#     for contact in contacts:
-#         names = contact.get('names', [])
-#         emails = contact.get('emailAddresses', [])
-        
-#         if not emails:
-#             continue
-            
-#         display_name = names[0].get('displayName') if names else emails[0].get('value')
-#         email_matches.append({
-#             'name': display_name,
-#             'email': emails[0].get('value')
-#         })
     
     return jsonify({'matches': email_matches})
 
