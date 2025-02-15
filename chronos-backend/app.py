@@ -16,7 +16,7 @@ CORS(app)
 
 app.secret_key = 'thisisSECRET1340iu5203u5103'
 CLIENT_SECRETS_FILE = "client_secret.json"
-SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
+SCOPES = ['https://www.googleapis.com/auth/calendar']
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'  # REMOVE IN PROD
 
 
