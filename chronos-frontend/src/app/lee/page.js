@@ -1,5 +1,5 @@
 'use client'
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Manrope } from 'next/font/google';
 import { Calendar } from '@/components/ui/calendar';
 import Preferences from '@/components/Preferences';
@@ -56,6 +56,65 @@ const generateSampleEvents = () => {
 function CalendarPage() {
   const [events, setEvents] = useState(generateSampleEvents());
   const [selectedEvent, setSelectedEvent] = useState(null);
+
+  const [isLoggedIn, setIsLoggedIn] = React.useState(false)
+  const [events1, setEvents1] = React.useState([])
+  const [authToken, setAuthToken] = React.useState(null)
+
+  useEffect(() => {
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get('token');
+
+  if (token) {
+      localStorage.setItem('authToken', token);
+      window.history.replaceState({}, '', '/lee');
+      setAuthToken(token);
+  } else {
+      const savedToken = localStorage.getItem('authToken');
+      if (savedToken) {
+      setAuthToken(savedToken);
+      }
+  }
+  }, []);
+
+  useEffect(() => {
+    const checkAuthAndFetchEvents = async () => {
+      try {
+        const authResponse = await fetch('http://127.0.0.1:5000/api/auth-status', {
+          credentials: 'include'
+        });
+        
+        if (authResponse.ok) {
+          const authData = await authResponse.json();
+          
+          if (authData.isAuthenticated) {
+            const eventsResponse = await fetch('http://127.0.0.1:5000/api/events', {
+              credentials: 'include'
+            });
+            
+            if (eventsResponse.ok) {
+              const eventsData = await eventsResponse.json();
+              setEvents1(eventsData.events);
+              setIsLoggedIn(true);
+            } else {
+              window.location.href = 'http://127.0.0.1:5000/login';
+            }
+          } else {
+            window.location.href = 'http://127.0.0.1:5000/login';
+          }
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        window.location.href = 'http://127.0.0.1:5000/login';
+      }
+    };
+
+    if (!isLoggedIn) {
+      checkAuthAndFetchEvents();
+    }
+  }, [isLoggedIn]);
+
+  console.log('Calendar Events:', events1);
 
   const handleEventClick = (event) => {
       setSelectedEvent(event);

@@ -1,92 +1,114 @@
-from flask import Flask, jsonify, session, redirect, request
+from flask import Flask, jsonify, session, redirect, request, url_for
 from flask_cors import CORS
 import os
-import pathlib
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import Flow
+from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
-from pip._vendor import cachecontrol
-import google.auth.transport.requests
-import requests
 from datetime import datetime, timedelta
 
 app = Flask(__name__)
-CORS(app)
-
-
 app.secret_key = 'thisisSECRET1340iu5203u5103'
-CLIENT_SECRETS_FILE = "client_secret.json"
-SCOPES = ['https://www.googleapis.com/auth/calendar']
-os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'  # REMOVE IN PROD
+CORS(app, supports_credentials=True)
 
+SCOPES = [
+    'https://www.googleapis.com/auth/calendar',
+    'https://www.googleapis.com/auth/calendar.readonly'
+]
 
-@app.route('/', methods=['GET'])
-def hello_world():
-    try:
-        return jsonify({'message': 'Welcome to Chronos API'})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+class CalendarAPI:
+    def __init__(self):
+        self.auth_state = None
+        self.creds = None
+        self.service = None
+
+    def login(self) -> str:
+        # Check if we have valid credentials
+        if os.path.exists('token.json'):
+            self.creds = Credentials.from_authorized_user_file('token.json', SCOPES)
+            if self.creds.valid:
+                self.instantiate()
+                return ''
+
+        # If creds are expired but we have a refresh token
+        if self.creds and self.creds.expired and self.creds.refresh_token:
+            self.creds.refresh(Request())
+            self.instantiate()
+            return ''
+
+        # Otherwise, need to get new credentials
+        flow = Flow.from_client_secrets_file('client_secret.json', SCOPES)
+        flow.redirect_uri = url_for('callback', _external=True)
+        auth_url, self.auth_state = flow.authorization_url(
+            access_type='offline',
+            prompt='consent'
+        )
+        return auth_url
+
+    def login_callback(self, auth_response):
+        flow = Flow.from_client_secrets_file(
+            'client_secret.json',
+            scopes=SCOPES,
+            state=self.auth_state
+        )
+        flow.redirect_uri = url_for('callback', _external=True)
+        
+        flow.fetch_token(authorization_response=auth_response)
+        self.creds = flow.credentials
+        
+        # Save credentials for future use
+        with open('token.json', 'w') as token:
+            token.write(self.creds.to_json())
+            
+        self.instantiate()
+
+    def instantiate(self):
+        self.service = build('calendar', 'v3', credentials=self.creds)
+
+    def get_events(self):
+        if not self.creds or not self.creds.valid:
+            return None
+            
+        ten_days_ago = datetime.utcnow() - timedelta(days=10)
+        time_min = ten_days_ago.isoformat() + 'Z'
+        
+        events_result = self.service.events().list(
+            calendarId='primary',
+            timeMin=time_min,
+            maxResults=200,
+            singleEvents=True,
+            orderBy='startTime'
+        ).execute()
+        
+        return events_result.get('items', [])
+
+# Create global instance
+calendar_api = CalendarAPI()
 
 @app.route('/login')
 def login():
-    flow = Flow.from_client_secrets_file(
-        CLIENT_SECRETS_FILE,
-        scopes=SCOPES,
-        redirect_uri="http://127.0.0.1:5000/callback"
-    )
-    
-    authorization_url, state = flow.authorization_url(
-        access_type='offline',
-        include_granted_scopes='true'
-    )
-    
-    session['state'] = state
-    return redirect(authorization_url)
-
+    auth_url = calendar_api.login()
+    if auth_url:
+        session['state'] = calendar_api.auth_state
+        return redirect(auth_url)
+    return redirect('http://localhost:3000/lee')
 
 @app.route('/callback')
 def callback():
-    flow = Flow.from_client_secrets_file(
-        CLIENT_SECRETS_FILE,
-        scopes=SCOPES,
-        state=session['state'],
-        redirect_uri="http://127.0.0.1:5000/callback"
-    )
-    
-    authorization_response = request.url
-    flow.fetch_token(authorization_response=authorization_response)
-    credentials = flow.credentials
+    calendar_api.login_callback(request.url)
+    return redirect('http://localhost:3000/lee')
 
-    ten_days_ago = datetime.utcnow() - timedelta(days=10)
-    time_min = ten_days_ago.isoformat() + 'Z'
-    
-    service = build('calendar', 'v3', credentials=credentials)
-    events_result = service.events().list(
-        calendarId='primary',
-        timeMin=time_min,
-        maxResults=200,
-        singleEvents=True,
-        orderBy='startTime'
-    ).execute()
-    
-    events = events_result.get('items', [])
-    # print(events)
-    
-    return {'events': events}
+@app.route('/api/events', methods=['GET'])
+def get_events():
+    events = calendar_api.get_events()
+    if events is None:
+        return jsonify({'error': 'Not authenticated'}), 401
+    return jsonify({'events': events})
 
-@app.errorhandler(403)
-def forbidden_error(error):
-    return jsonify({
-        "error": "Forbidden",
-        "message": str(error)
-    }), 403
-
-@app.errorhandler(Exception)
-def handle_error(error):
-    return jsonify({
-        "error": type(error).__name__,
-        "message": str(error)
-    }), 500
+@app.route('/api/auth-status', methods=['GET'])
+def auth_status():
+    is_authenticated = calendar_api.creds and calendar_api.creds.valid
+    return jsonify({'isAuthenticated': is_authenticated})
 
 if __name__ == '__main__':
     app.run(debug=True, use_reloader=True, port=5000)
