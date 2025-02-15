@@ -7,6 +7,7 @@ import { useState } from 'react';
 import WeeklyCalendar from '@/components/WeeklyCalendar';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import ChatInterface from '@/components/ChatInterface';
 
 
 const manrope = Manrope({ subsets: ['latin'] })
@@ -212,11 +213,9 @@ const PageLayout = () => {
                             <CalendarPage />
                         </div>
 
-                        <div className="col-span-3 h-full pt-[10vh]">
-                            <DemoContent
-                                title="Chronos"
-                                className="h-[90vh] bg-[#E4E4E4] rounded-xl"
-                            />
+                        <div className="col-span-3 h-full">
+                          {/* pt-[10vh] */}
+                          <ChatInterface/>
                         </div>
                     </div>
                 </div>

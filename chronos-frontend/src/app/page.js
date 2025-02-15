@@ -7,6 +7,7 @@ import { useState } from 'react';
 import WeeklyCalendar from '@/components/WeeklyCalendar';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import ChatInterface from '@/components/ChatInterface';
 
 
 const manrope = Manrope({ subsets: ['latin'] })
@@ -190,14 +191,10 @@ const PageLayout = () => {
     const [date, setDate] = React.useState(new Date())
     return (
         <div className={manrope.className}>
-            <div className="min-h-screen bg-white-100">
-                <div className="w-full">
-                    {/* Main Grid Layout */}
-                    <div className="grid grid-cols-12 gap-4">
-
-                        {/* Left Column aka Month Calendar View + Preferences */}
-                        <div className="col-span-2 h-screen">
-                            {/* Top Left Month Calendar View */}
+            <div className="h-screen bg-white-100 overflow-hidden">
+                <div>
+                    <div className="grid grid-cols-12 h-screen">
+                        <div className="col-span-2 h-full overflow-hidden flex flex-col">
                             <div className="h-[35vh]">
                                 <Calendar
                                     mode="single"
@@ -207,23 +204,18 @@ const PageLayout = () => {
                                 />
                             </div>
 
-                            {/* Preferences */}``
-                            <div className="h-[65vh]">
+                            <div className="h-[65vh] overflow-hidden">
                                 <Preferences />
                             </div>
                         </div>
 
-                        {/* Middle Column aka Main Calendar View */}
-                        <div className="col-span-7 h-screen">
+                        <div className="col-span-7 h-full overflow-hidden">
                             <CalendarPage />
                         </div>
 
-                        {/* Right Column aka Chronos Chatbot */}
-                        <div className="col-span-3 h-screen pt-[10vh]">
-                            <DemoContent
-                                title="Chronos"
-                                className="h-[90vh] bg-[#E4E4E4] rounded-xl"
-                            />
+                        <div className="col-span-3 h-full">
+                          {/* pt-[10vh] */}
+                          <ChatInterface/>
                         </div>
                     </div>
                 </div>
