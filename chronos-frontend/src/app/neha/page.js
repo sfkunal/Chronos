@@ -6,6 +6,7 @@ import Preferences from '@/components/Preferences';
 import { useState } from 'react';
 import WeeklyCalendar from '@/components/WeeklyCalendar';
 import { Button } from '@/components/ui/button';
+import ChatInterface from '@/components/ChatInterface';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 
@@ -219,11 +220,12 @@ const PageLayout = () => {
                         </div>
 
                         {/* Right Column aka Chronos Chatbot */}
-                        <div className="col-span-3 h-screen pt-[10vh]">
-                            <DemoContent
+                        <div className="col-span-3 h-screen">
+                            {/* <DemoContent
                                 title="Chronos"
                                 className="h-[90vh] bg-[#E4E4E4] rounded-xl"
-                            />
+                            /> */}
+                            <ChatInterface />
                         </div>
                     </div>
                 </div>
