@@ -1,7 +1,6 @@
-"use client"
-// pages/calendar.jsx
+'use client';
 import { useState } from 'react';
-import Calendar from '@/components/Calendar';
+import WeeklyCalendar from '@/components/WeeklyCalendar';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
@@ -50,7 +49,7 @@ export default function CalendarPage() {
         <div className="container mx-auto py-8">
             <h1 className="text-2xl font-bold mb-4">Weekly Calendar</h1>
 
-            <Calendar events={events} onEventClick={handleEventClick} />
+            <WeeklyCalendar events={events} onEventClick={handleEventClick} />
 
             {selectedEvent && (
                 <Dialog open={!!selectedEvent} onOpenChange={(open) => !open && setSelectedEvent(null)}>

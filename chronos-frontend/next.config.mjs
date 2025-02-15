@@ -5,8 +5,8 @@ const nextConfig = {
         {
           source: '/api/:path*',
           destination: process.env.NODE_ENV === 'development'
-            ? 'http://127.0.0.1:5000/api/:path*'  // Local Flask development
-            : 'https://.../api/:path*'  // Production (if we choose to deploy)
+            ? 'http://127.0.0.1:5000/:path*'  // Local Flask development
+            : 'https://...com/api/:path*'  // Production (if we choose to deploy)
         }
       ]
     }

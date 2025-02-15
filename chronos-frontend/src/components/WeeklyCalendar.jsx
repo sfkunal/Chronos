@@ -3,7 +3,7 @@ import DayColumn from './DayColumn';
 import TimeGrid from './TimeGrid';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
-const Calendar = ({ events, onEventClick }) => {
+const WeeklyCalendar = ({ events, onEventClick }) => {
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
     // Group events by day of week
@@ -44,4 +44,4 @@ const Calendar = ({ events, onEventClick }) => {
     );
 };
 
-export default Calendar;
+export default WeeklyCalendar;
