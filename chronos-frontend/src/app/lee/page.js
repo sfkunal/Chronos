@@ -189,7 +189,7 @@ function CalendarPage() {
 
 
 const PageLayout = () => {
-  const [date, setDate] = React.useState(new Date())
+  const [date, setDate] = React.useState(new Date());
   return (
     <div className={manrope.className}>
       <div className="min-h-screen bg-gray-100">
@@ -200,8 +200,8 @@ const PageLayout = () => {
             {/* Left Column aka Month Calendar View + Preferences */}
             <div className="col-span-2 h-screen">
               {/* Top Left Month Calendar View */}
-              {/* TODO: Show current date + week highlighted */}
-              <div className="h-[33vh] pl-2">
+              <div className="h-[35vh]">
+                {/* TODO: Show current date + week highlighted */}
                 <Calendar
                   mode="single"
                   selected={date}
@@ -212,21 +212,25 @@ const PageLayout = () => {
 
               {/* Preferences */}``
               <div className="h-[67vh]">
-                <Preferences />
+
+                {/* Preferences */}
+                <div className="h-[65vh]">
+                  <Preferences />
+                </div>
               </div>
-            </div>
 
-            {/* Middle Column aka Main Calendar View */}
-            <div className="col-span-7">
-              <CalendarPage className />
-            </div>
+              {/* Middle Column aka Main Calendar View */}
+              <div className="col-span-7">
+                <CalendarPage className />
+              </div>
 
-            {/* Right Column aka Chronos Chatbot */}
-            <div className="col-span-3 h-screen pt-[10vh]">
-              <DemoContent
-                title="Chronos"
-                className="h-[90vh] bg-[#E4E4E4] rounded-xl"
-              />
+              {/* Right Column aka Chronos Chatbot */}
+              <div className="col-span-3 h-screen pt-[10vh]">
+                <DemoContent
+                  title="Chronos"
+                  className="h-[90vh] bg-[#E4E4E4] rounded-xl"
+                />
+              </div>
             </div>
           </div>
         </div>
