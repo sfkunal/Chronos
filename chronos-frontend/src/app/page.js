@@ -219,7 +219,7 @@ const PageLayout = () => {
                                 />
                             </div>
 
-                            {/* Preferences */}``
+                            {/* Preferences */}
                             <div className="h-[65vh]">
                                 <Preferences onPreferencesChange={handlePreferencesChange}/>
                             </div>
