@@ -1,22 +1,26 @@
 {
   "name": "chronos-frontend",
+  "private": true,
   "version": "1.0.0",
-  "main": "dist/main.js",
   "scripts": {
-    "start": "electron .",
-    "build": "tsc && cp src/index.html dist/",
-    "watch": "tsc -w",
-    "dev": "concurrently \"npm run watch\" \"npm run start\""
+    "start": "vite",
+    "build": "vite build",
+    "electron:dev": "NODE_ENV=development electron .",
+    "electron:build": "vite build && electron-builder",
+    "dev": "concurrently \"npm run start\" \"npm run electron:dev\""
   },
   "dependencies": {
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   },
   "devDependencies": {
-    "@types/react": "^18.3.18",
-    "@types/react-dom": "^18.3.5",
-    "concurrently": "^8.2.2",
-    "electron": "^29.4.6",
-    "typescript": "^5.7.3"
-  }
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "@vitejs/plugin-react": "^4.2.0",
+    "concurrently": "^8.2.0",
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.0",
+    "vite": "^5.0.0"
+  },
+  "main": "src/main.js"
 }
