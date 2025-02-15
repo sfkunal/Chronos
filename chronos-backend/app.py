@@ -6,7 +6,7 @@ from google_auth_oauthlib.flow import Flow
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
 from datetime import datetime, timedelta
-from search_engine import stringify_event, update_events_in_chroma, search_events
+# from search_engine import stringify_event, update_events_in_chroma, search_events
 
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'  # Allow HTTP connections in development
 
@@ -113,44 +113,44 @@ def get_events():
     
     print("Events retrieved from Google Calendar")
     
-    try:
-        success = update_events_in_chroma(events)
-        if not success:
-            return jsonify({'error': 'Failed to update search index'}), 500
-        print("Events successfully updated in Chroma")
-    except Exception as e:
-        print(f"Error updating events in Chroma: {str(e)}")
-        return jsonify({'error': f'Failed to update search index: {str(e)}'}), 500
+    # try:
+    #     success = update_events_in_chroma(events)
+    #     if not success:
+    #         return jsonify({'error': 'Failed to update search index'}), 500
+    #     print("Events successfully updated in Chroma")
+    # except Exception as e:
+    #     print(f"Error updating events in Chroma: {str(e)}")
+    #     return jsonify({'error': f'Failed to update search index: {str(e)}'}), 500
 
     return jsonify({'events': events})
 
-@app.route('/api/search', methods=['GET'])
-def search_calendar():
-    query = request.args.get('q')
-    if not query:
-        return jsonify({'error': 'No search query provided'}), 400
+# @app.route('/api/search', methods=['GET'])
+# def search_calendar():
+#     query = request.args.get('q')
+#     if not query:
+#         return jsonify({'error': 'No search query provided'}), 400
 
-    # Get number of results from query params, default to 5
-    n_results = int(request.args.get('n', 5))
+#     # Get number of results from query params, default to 5
+#     n_results = int(request.args.get('n', 5))
     
-    try:
-        search_results = search_events(query, n_results)
-        if search_results is None:
-            return jsonify({'error': 'Search failed'}), 500
+#     try:
+#         search_results = search_events(query, n_results)
+#         if search_results is None:
+#             return jsonify({'error': 'Search failed'}), 500
             
-        # Format the response
-        response = {
-            'query': query,
-            'matches': search_results['documents'][0],  # List of matching document texts
-            'distances': search_results['distances'][0], # Similarity scores
-            'metadatas': search_results['metadatas'][0] # Metadata for each match
-        }
+#         # Format the response
+#         response = {
+#             'query': query,
+#             'matches': search_results['documents'][0],  # List of matching document texts
+#             'distances': search_results['distances'][0], # Similarity scores
+#             'metadatas': search_results['metadatas'][0] # Metadata for each match
+#         }
         
-        return jsonify(response)
+#         return jsonify(response)
         
-    except Exception as e:
-        print(f"Error during search: {str(e)}")
-        return jsonify({'error': f'Search failed: {str(e)}'}), 500
+#     except Exception as e:
+#         print(f"Error during search: {str(e)}")
+#         return jsonify({'error': f'Search failed: {str(e)}'}), 500
 
 @app.route('/api/auth-status', methods=['GET'])
 def auth_status():
