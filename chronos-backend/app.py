@@ -70,7 +70,7 @@ def callback():
     ).execute()
     
     events = events_result.get('items', [])
-    print(events)
+    # print(events)
     
     return {'events': events}
 
