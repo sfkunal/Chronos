@@ -29,7 +29,7 @@ SCOPES = [
     'https://www.googleapis.com/auth/contacts.readonly',
     'https://www.googleapis.com/auth/directory.readonly',
     'https://www.googleapis.com/auth/contacts.other.readonly',
-    'https://www.googleapis.com/auth/peopleapi.readonly'  # Add this scope for accessing other contacts
+    'https://www.googleapis.com/auth/peopleapi.readonly'
 ]
 
 class CalendarAPI:
@@ -110,67 +110,7 @@ class CalendarAPI:
         
         return events_result.get('items', [])
 
-    def get_contacts(self, query=None, page_size=30):
-        if not self.creds or not self.creds.valid:
-            return None
-        
-        try:
-            all_connections = []
-            
-            if query:
-                # Search personal contacts
-                try:
-                    contact_results = self.people_service.people().searchContacts(
-                        query=query,
-                        readMask='names,emailAddresses,phoneNumbers',
-                        pageSize=min(page_size, 30)
-                    ).execute()
-                    all_connections.extend(contact_results.get('results', []))
-                except Exception as e:
-                    print(f"Error searching contacts: {str(e)}")
-
-                # Get all connections and filter locally
-                try:
-                    connections = self.people_service.people().connections().list(
-                        resourceName='people/me',
-                        pageSize=1000,
-                        personFields='names,emailAddresses,phoneNumbers,metadata'
-                    ).execute()
-                    
-                    # Filter connections manually based on query
-                    query = query.lower()
-                    for contact in connections.get('connections', []):
-                        # Check email address
-                        emails = contact.get('emailAddresses', [])
-                        if any(query in email.get('value', '').lower() for email in emails):
-                            all_connections.append(contact)
-                            continue
-                            
-                        # Check names
-                        names = contact.get('names', [])
-                        if any(query in name.get('displayName', '').lower() for name in names):
-                            all_connections.append(contact)
-                
-                except Exception as e:
-                    print(f"Error listing connections: {str(e)}")
-                
-            else:
-                # Get all contacts (no query)
-                try:
-                    connections = self.people_service.people().connections().list(
-                        resourceName='people/me',
-                        pageSize=min(page_size, 1000),
-                        personFields='names,emailAddresses,phoneNumbers'
-                    ).execute()
-                    all_connections.extend(connections.get('connections', []))
-                except Exception as e:
-                    print(f"Error listing connections: {str(e)}")
-            
-            return all_connections
-            
-        except Exception as e:
-            print(f"Error fetching contacts: {str(e)}")
-            return None
+    
 
 # Create global instances
 calendar_api = CalendarAPI()
@@ -275,7 +215,7 @@ def schedule_event():
         # Initialize scheduling agent if needed
         global scheduling_agent
         if scheduling_agent is None:
-            scheduling_agent = SchedulingAgent(calendar_api.service)
+            scheduling_agent = SchedulingAgent(calendar_api.service, calendar_api.people_service)
         
         # Process the scheduling request
         event_details = scheduling_agent.process_request(
@@ -306,53 +246,53 @@ def schedule_event():
             'message': f'Failed to process scheduling request: {str(e)}'
         }), 500, response_headers
 
-@app.route('/api/contacts', methods=['GET'])
-def get_contacts():
-    query = request.args.get('q')  # Get search query from URL params
-    contacts = calendar_api.get_contacts(query=query)
-    if contacts is None:
-        return jsonify({'error': 'Not authenticated'}), 401
+# @app.route('/api/contacts', methods=['GET'])
+# def get_contacts():
+#     query = request.args.get('q')  # Get search query from URL params
+#     contacts = calendar_api.get_contacts(query=query)
+#     if contacts is None:
+#         return jsonify({'error': 'Not authenticated'}), 401
     
-    # Format contacts for frontend
-    formatted_contacts = []
-    for contact in contacts:
-        # Skip contacts without email addresses
-        if not contact.get('emailAddresses'):
-            continue
+#     # Format contacts for frontend
+#     formatted_contacts = []
+#     for contact in contacts:
+#         # Skip contacts without email addresses
+#         if not contact.get('emailAddresses'):
+#             continue
             
-        formatted_contact = {
-            'resourceName': contact.get('resourceName'),
-            'names': contact.get('names', []),
-            'emailAddresses': contact.get('emailAddresses', []),
-            'phoneNumbers': contact.get('phoneNumbers', [])
-        }
-        formatted_contacts.append(formatted_contact)
+#         formatted_contact = {
+#             'resourceName': contact.get('resourceName'),
+#             'names': contact.get('names', []),
+#             'emailAddresses': contact.get('emailAddresses', []),
+#             'phoneNumbers': contact.get('phoneNumbers', [])
+#         }
+#         formatted_contacts.append(formatted_contact)
     
-    return jsonify({'contacts': formatted_contacts})
+#     return jsonify({'contacts': formatted_contacts})
 
-@app.route('/api/email-lookup', methods=['GET'])
-def email_lookup():
-    query = request.args.get('q')
-    if not query:
-        return jsonify({'error': 'No search query provided'}), 400
+# @app.route('/api/email-lookup', methods=['GET'])
+# def email_lookup():
+#     query = request.args.get('q')
+#     if not query:
+#         return jsonify({'error': 'No search query provided'}), 400
         
-    contacts = calendar_api.get_contacts(query=query)
-    if contacts is None:
-        return jsonify({'error': 'Not authenticated'}), 401
+#     contacts = calendar_api.get_contacts(query=query)
+#     if contacts is None:
+#         return jsonify({'error': 'Not authenticated'}), 401
     
-    email_matches = []
-    for contact in contacts:
-        names = contact.get('names', [])
-        emails = contact.get('emailAddresses', [])
+#     email_matches = []
+#     for contact in contacts:
+#         names = contact.get('names', [])
+#         emails = contact.get('emailAddresses', [])
         
-        if not emails:
-            continue
+#         if not emails:
+#             continue
             
-        display_name = names[0].get('displayName') if names else emails[0].get('value')
-        email_matches.append({
-            'name': display_name,
-            'email': emails[0].get('value')
-        })
+#         display_name = names[0].get('displayName') if names else emails[0].get('value')
+#         email_matches.append({
+#             'name': display_name,
+#             'email': emails[0].get('value')
+#         })
     
     return jsonify({'matches': email_matches})
 

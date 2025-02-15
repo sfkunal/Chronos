@@ -174,13 +174,103 @@ class PreferencesAgent:
         
         return chat_completion.choices[0].message.content
 
+class ContactAgent:
+    def __init__(self, people_service):
+        self.people_service = people_service
+
+    def get_contacts(self, query=None, page_size=30):
+        if not self.people_service:
+            return None
+        
+        try:
+            all_connections = []
+            
+            if query:
+                # Search personal contacts
+                try:
+                    contact_results = self.people_service.people().searchContacts(
+                        query=query,
+                        readMask='names,emailAddresses,phoneNumbers',
+                        pageSize=min(page_size, 30)
+                    ).execute()
+                    all_connections.extend(contact_results.get('results', []))
+                except Exception as e:
+                    print(f"Error searching contacts: {str(e)}")
+
+                # Get all connections and filter locally
+                try:
+                    connections = self.people_service.people().connections().list(
+                        resourceName='people/me',
+                        pageSize=1000,
+                        personFields='names,emailAddresses,phoneNumbers,metadata'
+                    ).execute()
+                    
+                    # Filter connections manually based on query
+                    query = query.lower()
+                    for contact in connections.get('connections', []):
+                        # Check email address
+                        emails = contact.get('emailAddresses', [])
+                        if any(query in email.get('value', '').lower() for email in emails):
+                            all_connections.append(contact)
+                            continue
+                            
+                        # Check names
+                        names = contact.get('names', [])
+                        if any(query in name.get('displayName', '').lower() for name in names):
+                            all_connections.append(contact)
+                
+                except Exception as e:
+                    print(f"Error listing connections: {str(e)}")
+                
+            else:
+                # Get all contacts (no query)
+                try:
+                    connections = self.people_service.people().connections().list(
+                        resourceName='people/me',
+                        pageSize=min(page_size, 1000),
+                        personFields='names,emailAddresses,phoneNumbers'
+                    ).execute()
+                    all_connections.extend(connections.get('connections', []))
+                except Exception as e:
+                    print(f"Error listing connections: {str(e)}")
+            
+            return all_connections
+            
+        except Exception as e:
+            print(f"Error fetching contacts: {str(e)}")
+            return None
+
+    def email_lookup(self, query=None):            
+        contacts = self.get_contacts(query)
+        if contacts is None:
+            return None
+        
+        email_matches = []
+        for contact in contacts:
+            names = contact.get('names', [])
+            emails = contact.get('emailAddresses', [])
+            
+            if not emails:
+                continue
+                
+            display_name = names[0].get('displayName') if names else emails[0].get('value')
+            email_matches.append({
+                'name': display_name,
+                'email': emails[0].get('value')
+            })
+            
+        return email_matches
+
 class SchedulingAgent:
-    def __init__(self, service):
+    def __init__(self, service, people_service):
         self.intent_agent = IntentAgent()
         self.availability_agent = AvailabilityAgent(service)
         self.preferences_agent = PreferencesAgent()
         self.groq_client = Groq(api_key=os.getenv('GROQ_API_KEY'))
         self.service = service
+        self.people_service = people_service
+        self.contacts = ContactAgent(people_service).email_lookup()
+        print("contacts", self.contacts)
         pacific_tz = pytz.timezone('America/Los_Angeles')
         now = datetime.now(pacific_tz)
         current_date = now.strftime('%Y-%m-%d')
@@ -220,7 +310,7 @@ class SchedulingAgent:
         2. Only summary, description, start, and end are required
         3. Default duration is 1 hour if not specified
         4. Use America/Los_Angeles timezone
-        5. Extract attendee emails if present
+        5. Extract attendee ONLY if emails are present in the query
         6. Extract location if present
         7. Always set reminders.useDefault to true
         8. ABOVE ALL, RESPECT THE AVAILABILITY PREFERENCES THAT A USER PROVIDES YOU""".format(current_date, current_time)
@@ -284,6 +374,8 @@ class SchedulingAgent:
         try:
             intent = self.intent_agent.extract_intent(action_query)
             preference_rules = self.preferences_agent.get_rule_based_preferences(preferences)
+
+            print("action_query", action_query)
             
             if intent.intent in ["CREATE", "EDIT"]:
                 chat_completion = self.groq_client.chat.completions.create(
@@ -297,12 +389,13 @@ class SchedulingAgent:
                             "content": f"""Action: {action_query}
                             User Preferences: {preference_rules}
                             Current Availability: {self.availability_agent.get_two_week_availability() if self.availability_agent else 'Not available'}
+                            Contacts: {self.contacts}
                             
                             Generate a calendar event JSON that respects these preferences and availability.
                             Remember to include:
                             1. Start and end times in ISO format with timezone
                             2. Summary and description
-                            3. Attendee emails if provided
+                            3. Attendees ONLY IF an email is provided
                             4. Default 1 hour duration"""
                         }
                     ],
@@ -382,30 +475,42 @@ class SchedulingAgent:
 # Update the test code
 if __name__ == "__main__":
     try:
-        SCOPES = ['https://www.googleapis.com/auth/calendar']
-        flow = InstalledAppFlow.from_client_secrets_file('client_secret.json', SCOPES)
-        creds = flow.run_local_server(port=8080)
-        service = build('calendar', 'v3', credentials=creds)
+        SCOPES = [
+            'https://www.googleapis.com/auth/calendar',
+            'https://www.googleapis.com/auth/calendar.readonly',
+            'https://www.googleapis.com/auth/contacts.readonly',
+            'https://www.googleapis.com/auth/directory.readonly',
+            'https://www.googleapis.com/auth/contacts.other.readonly',
+            'https://www.googleapis.com/auth/peopleapi.readonly'
+        ]
+        # flow = InstalledAppFlow.from_client_secrets_file('client_secret.json', SCOPES)
+        # creds = flow.run_local_server(port=8080)
+        # service = build('calendar', 'v3', credentials=creds)
+        # people_service = build('people', 'v1', credentials=creds)
 
-        scheduling_agent = SchedulingAgent(service)
+        # contact_agent = ContactAgent(people_service)
+        # result = contact_agent.email_lookup("connor")
+        # print(result)
+
+        # scheduling_agent = SchedulingAgent(service, people_service)
         
         # Get the event details first
-        event_details = scheduling_agent.process_request(
-            "Schedule lunch with Connor (connorchan4@gmail.com) next Wednesday at noon", 
-            ["I only take lunch meetings between 12-2pm", "No meetings on Fridays"]
-        )
+        # event_details = scheduling_agent.process_request(
+        #     "Schedule lunch with Connor Chan next Wednesday at noon", 
+        #     ["I only take lunch meetings between 12-2pm", "No meetings on Fridays"]
+        # )
         
-        print("Processed event details:", event_details)
+        # print("Processed event details:", event_details)
         
         # Check for errors in the event details
-        if isinstance(event_details, dict) and event_details.get('status') == 'error':
-            print("Error in processing request:", event_details['message'])
-            if 'raw_response' in event_details:
-                print("Raw LLM response:", event_details['raw_response'])
-        else:
+        # if isinstance(event_details, dict) and event_details.get('status') == 'error':
+        #     print("Error in processing request:", event_details['message'])
+        #     if 'raw_response' in event_details:
+        #         print("Raw LLM response:", event_details['raw_response'])
+        # else:
             # Create the calendar event only if we have valid event details
-            response = scheduling_agent.create_calendar_event(event_details)
-            print("Create calendar event response:", response)
+    #         response = scheduling_agent.create_calendar_event(event_details)
+    #         print("Create calendar event response:", response)
         
     except Exception as e:
         print(f"Error in main execution: {str(e)}")
