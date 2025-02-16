@@ -504,6 +504,7 @@ def set_welcome_message():
 
     print(events_data)
     la_tz = pytz.timezone('America/Los_Angeles')
+    today_info = datetime.now(la_tz)
     today = datetime.now(la_tz).date()
 
     # Filter function
@@ -519,7 +520,7 @@ def set_welcome_message():
                 event_datetime = event_datetime.astimezone(la_tz)
                 
             # Compare only the date portion
-            return event_datetime.date() == today
+            return event_datetime.date() == today and event_datetime.ctime() > today_info.ctime()
             
         except (KeyError, ValueError):
             return False
@@ -527,7 +528,7 @@ def set_welcome_message():
     # Filter the events
     events_today = list(filter(is_event_today, events_data))
         
-    day_summary = get_groq_welcome(events_today)
+    day_summary = get_groq_welcome(events_today, today_info.ctime())
     print(day_summary)
 
     return jsonify({'message': day_summary})

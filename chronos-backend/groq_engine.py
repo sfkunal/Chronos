@@ -509,7 +509,7 @@ class SchedulingAgent:
             return "I couldn't find that information in the calendar."
         
 
-def get_groq_welcome(events_today):
+def get_groq_welcome(events_today, current_time):
     try:
         from groq import Groq
         import os
@@ -520,14 +520,15 @@ def get_groq_welcome(events_today):
 
         # Convert events_today to string if it's not already
         events_str = str(events_today) if events_today is not None else "No events found for today."
+        current_time_str = str(current_time) if current_time is not None else "No current time found."
 
         completion = groq_client.chat.completions.create(
             messages=[
                 {
                     "role": "system",
-                    "content": """You are a calendar assistant. You will be given a data structure of today's events on the calendar.
-                    Your task is to write a brief and informative summary of the user's day ahead. You should humanize the response, but keep it very professional and concise.
-                    That means its okay to mention holidays (ONLY if known), company anniversaries (ONLY if known), things to look forward to, important meetings, etc.
+                    "content": """You are a calendar assistant. You will be given two pieces of information: a data structure of upcoming events for today in the calendar, and the current time of day. 
+                    Your task is to write a brief and informative summary of the user's day ahead. You should humanize the response, but keep it very professional and concise. Start the response with a friendly greeting, dependent on the time of day. 
+                    That means its okay to mention holidays (ONLY if known), company anniversaries (ONLY if known), things to look forward to, important meetings, etc. If there are no upcoming events, let the user know with a upbeat response.
                     - IMPORTANT: Format it like a company would format meeting minutes. Use markdown formatting to make it look nice.
                     - Use exact dates and times
                     -Give 1-2 "important reminders" bullet points beneath the day's scheduling breakdown, but do not assume or hallucinate any information. Only give important reminders that revolve around things that are explictly obvious. Here is an example of an important reminder: "Prepare for your meeting with Jennifer tonight". THIS IS AN EXAMPLE, DO NOT USE THIS FOR THE USER.
@@ -536,7 +537,7 @@ def get_groq_welcome(events_today):
                 },
                 {
                     "role": "user",
-                    "content": events_str
+                    "content": f"Events for today: {events_str} Current time: {current_time_str}"
                 }
             ],
             model="llama3-8b-8192",
