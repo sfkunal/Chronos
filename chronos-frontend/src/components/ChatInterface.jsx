@@ -169,21 +169,32 @@ const ChatInterface = ({ welcomeMessage, onSubmit }) => {
                                     : 'bg-white text-gray-800 border border-gray-200 rounded-bl-none'}
                             `}
                         >
-                            <ReactMarkdown
-                                components={{
-                                    h1: ({ node, ...props }) => <h1 className="text-2xl font-bold mb-2" {...props} />,
-                                    h2: ({ node, ...props }) => <h2 className="text-xl font-bold mb-2" {...props} />,
-                                    h3: ({ node, ...props }) => <h3 className="text-lg font-bold mb-2" {...props} />,
-                                    p: ({ node, ...props }) => <p className="mb-2" {...props} />,
-                                    ul: ({ node, ...props }) => <ul className="list-disc ml-4 mb-2" {...props} />,
-                                    ol: ({ node, ...props }) => <ol className="list-decimal ml-4 mb-2" {...props} />,
-                                    li: ({ node, ...props }) => <li className="mb-1" {...props} />,
-                                    strong: ({ node, ...props }) => <strong className="font-bold" {...props} />,
-                                    em: ({ node, ...props }) => <em className="italic" {...props} />,
-                                }}
-                            >
-                                {message.text}
-                            </ReactMarkdown>
+                            {message.text === "Processing your request..." ? (
+                                <div className="flex items-center space-x-2">
+                                    <span>Thinking</span>
+                                    <span className="flex space-x-1">
+                                        <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                                        <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                                        <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"></span>
+                                    </span>
+                                </div>
+                            ) : (
+                                <ReactMarkdown
+                                    components={{
+                                        h1: ({ node, ...props }) => <h1 className="text-2xl font-bold mb-2" {...props} />,
+                                        h2: ({ node, ...props }) => <h2 className="text-xl font-bold mb-2" {...props} />,
+                                        h3: ({ node, ...props }) => <h3 className="text-lg font-bold mb-2" {...props} />,
+                                        p: ({ node, ...props }) => <p className="mb-2" {...props} />,
+                                        ul: ({ node, ...props }) => <ul className="list-disc ml-4 mb-2" {...props} />,
+                                        ol: ({ node, ...props }) => <ol className="list-decimal ml-4 mb-2" {...props} />,
+                                        li: ({ node, ...props }) => <li className="mb-1" {...props} />,
+                                        strong: ({ node, ...props }) => <strong className="font-bold" {...props} />,
+                                        em: ({ node, ...props }) => <em className="italic" {...props} />,
+                                    }}
+                                >
+                                    {message.text}
+                                </ReactMarkdown>
+                            )}
                         </div>
                     </div>
                 ))}
