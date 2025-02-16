@@ -120,7 +120,7 @@ const Event = ({ event, style, onClick, dayIndex, setEvents1 }) => {
         <Card
             ref={cardRef}
             className={cn(
-                "absolute left-1 right-1 overflow-hidden cursor-pointer transition-all duration-200 rounded-[10px] border-[1.5px] border-[#C9CACD]",
+                "absolute left-1 right-1 overflow-hidden cursor-pointer transition-all duration-200 rounded-[10px] border-[0.5px] border-[#C9CACD]",
                 isExpanded ? `z-[1000] scale-[2] shadow-xl ${getPositionClasses()} !h-auto` : "hover:ring-2 hover:ring-blue-400"
             )}
             onClick={(e) => {
