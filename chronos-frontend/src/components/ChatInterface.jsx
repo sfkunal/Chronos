@@ -3,7 +3,7 @@ import { Send } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import Image from 'next/image';
 
-const ChatInterface = ({ welcomeMessage, onSubmit }) => {
+const ChatInterface = ({ welcomeMessage, onSubmit, onEventsUpdate }) => {
     const [messages, setMessages] = useState([]);
     const [isRecording, setIsRecording] = useState(false);
     const [newMessage, setNewMessage] = useState('');
@@ -109,6 +109,16 @@ const ChatInterface = ({ welcomeMessage, onSubmit }) => {
                             isUser: false
                         }
                     ]);
+
+                    // Fetch updated events after successful event creation
+                    const eventsResponse = await fetch('http://127.0.0.1:5000/api/events', {
+                        credentials: 'include'
+                    });
+
+                    if (eventsResponse.ok) {
+                        const eventsData = await eventsResponse.json();
+                        onEventsUpdate(eventsData.events);
+                    }
                 }
             };
 

@@ -240,6 +240,10 @@ const PageLayout = () => {
         }
     };
 
+    const handleEventsUpdate = (newEvents) => {
+        setEvents1(newEvents);
+    };
+
     return (
         <div className={manrope.className}>
             <div className="min-h-screen bg-white">
@@ -275,6 +279,7 @@ const PageLayout = () => {
                             <ChatInterface
                                 onSubmit={handleChatSubmit}
                                 welcomeMessage={welcomeMessage}
+                                onEventsUpdate={handleEventsUpdate}
                             />
                         </div>
                     </div>
