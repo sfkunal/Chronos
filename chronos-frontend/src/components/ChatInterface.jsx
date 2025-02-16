@@ -81,7 +81,7 @@ const ChatInterface = ({ welcomeMessage, onSubmit }) => {
                 }
 
                 const data = await response.json();
-                
+
                 // Update message with current stage
                 setMessages(prev => [
                     ...prev.slice(0, -1),
@@ -118,7 +118,7 @@ const ChatInterface = ({ welcomeMessage, onSubmit }) => {
             console.error('Error:', error);
             // Handle different types of errors
             let errorMessage = "Sorry, I encountered an error while processing your request. Please try again.";
-            
+
             if (error.message && error.message.includes("Invalid JSON response from LLM")) {
                 errorMessage = "I had trouble understanding how to schedule these events. Could you rephrase your request?";
             } else if (error.response && error.response.data && error.response.data.message) {
@@ -222,20 +222,24 @@ const ChatInterface = ({ welcomeMessage, onSubmit }) => {
 
             {/* Input area */}
             <div className="p-3 border-t bg-white">
-                <div className="flex items-center space-x-2">
-                    <input
+                <div className="flex items-center space-x-2 relative">
+                    <textarea  // Changed from input to textarea
                         type="text"
                         placeholder="Type a message..."
-                        className="flex-1 py-2 px-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="h-24 flex-1 py-2 px-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300 align-top resize-none"  // Added align-top and resize-none
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
                         onKeyPress={(e) => {
-                            if (e.key === 'Enter') handleSendMessage();
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault();  // Prevent new line on Enter
+                                handleSendMessage();
+                            }
                         }}
+                        rows="1"  // Start with one row
                     />
                     <button
                         onClick={handleSendMessage}
-                        className="w-10 h-10 rounded-full bg-blue-500 text-white flex items-center justify-center hover:bg-blue-600 transition"
+                        className="absolute bottom-2 right-2 w-8 h-8 rounded-full bg-gray-400 text-white flex items-center justify-center hover:bg-blue-600 transition"
                     >
                         <Send size="50%" />
                     </button>
