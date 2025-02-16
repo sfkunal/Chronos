@@ -9,7 +9,7 @@ import { ChevronLeft, ChevronRight, Search } from 'lucide-react';
 
 const WeeklyCalendar = ({ events, onEventClick, setEvents1, selectedDate }) => {
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    const [currentDate, setCurrentDate] = useState(selectedDate);
+    const [currentDate, setCurrentDate] = useState(selectedDate ?? new Date());
     const [searchQuery, setSearchQuery] = useState('');
     const [isSearchExpanded, setIsSearchExpanded] = useState(false);
     const [searchResults, setSearchResults] = useState(null);
@@ -18,6 +18,7 @@ const WeeklyCalendar = ({ events, onEventClick, setEvents1, selectedDate }) => {
 
     useEffect(() => {
         if (selectedDate) {
+            console.log("selected date is defined");
             setCurrentDate(selectedDate);
         }
     }, [selectedDate]);

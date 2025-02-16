@@ -43,12 +43,14 @@ const getColorFromId = (colorId) => {
     return colorMap[colorId] || colorMap.default;
 };
 
-function CalendarPage({ events1, setEvents1 }) {
+function CalendarPage({ selectedMonthDate, events1, setEvents1 }) {
     const [events, setEvents] = useState([]);
     const [selectedEvent, setSelectedEvent] = useState(null);
     const [isLoggedIn, setIsLoggedIn] = React.useState(false);
     const [authToken, setAuthToken] = React.useState(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [selectedDate, setSelectedDate] = useState(selectedMonthDate ?? new Date())
+
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
@@ -65,6 +67,12 @@ function CalendarPage({ events1, setEvents1 }) {
             }
         }
     }, []);
+
+    useEffect(() => {
+        if (selectedMonthDate) {
+            setSelectedDate(selectedMonthDate);
+        }
+    }, [selectedMonthDate]);
 
     useEffect(() => {
         const checkAuthAndFetchEvents = async () => {
@@ -134,10 +142,11 @@ function CalendarPage({ events1, setEvents1 }) {
 
     return (
         <div className="container h-full pt-[2%] relative">
-            <WeeklyCalendar 
-                events={isLoading ? [] : events} 
+            <WeeklyCalendar
+                events={isLoading ? [] : events}
                 onEventClick={handleEventClick}
                 setEvents1={setEvents1}
+                selectedDate={selectedDate}
             />
 
             {isLoading && (
@@ -189,7 +198,7 @@ const PageLayout = () => {
                         credentials: 'include',
                         body: JSON.stringify({ events: events1 })
                     });
-                    
+
                     if (response.ok) {
                         const data = await response.json();
                         setWelcomeMessage(data.message);
@@ -225,7 +234,7 @@ const PageLayout = () => {
             console.log('Response:', response);
             const responseData = await response.json();
             console.log('Response data:', responseData);
-            
+
             if (!response.ok) {
                 throw new Error(responseData.message || 'Failed to schedule event');
             }
@@ -249,13 +258,13 @@ const PageLayout = () => {
 
     return (
         <div className={manrope.className}>
-            <div className="min-h-screen bg-gray-50">
+            <div className="min-h-screen bg-white">
                 <div className="w-full">
                     {/* Main Grid Layout */}
                     <div className="grid grid-cols-12 gap-4">
 
                         {/* Left Column aka Month Calendar View + Preferences */}
-                        <div className="col-span-2 h-screen">
+                        <div className="col-span-2 h-screen border-r border-black-200">
                             {/* Top Left Month Calendar View */}
                             <div className="h-[35vh]">
                                 <Calendar
@@ -268,13 +277,13 @@ const PageLayout = () => {
 
                             {/* Preferences */}
                             <div className="h-[65vh]">
-                                <Preferences onPreferencesChange={handlePreferencesChange}/>
+                                <Preferences onPreferencesChange={handlePreferencesChange} />
                             </div>
                         </div>
 
                         {/* Middle Column aka Main Calendar View */}
                         <div className="col-span-7 h-screen">
-                            <CalendarPage events1={events1} setEvents1={setEvents1} />
+                            <CalendarPage events1={events1} setEvents1={setEvents1} selectedMonthDate={date} />
                         </div>
 
                         {/* Right Column aka Chronos Chatbot */}
@@ -283,7 +292,7 @@ const PageLayout = () => {
                                 title="Chronos"
                                 className="h-[90vh] bg-[#E4E4E4] rounded-xl"
                             /> */}
-                            <ChatInterface 
+                            <ChatInterface
                                 onSubmit={handleChatSubmit}
                                 welcomeMessage={welcomeMessage}
                             />
