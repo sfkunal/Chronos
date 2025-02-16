@@ -169,7 +169,7 @@ class PreferencesAgent:
                     "content": f"Convert these preferences to rules:\n{preferences_text}",
                 }
             ],
-            model="llama3-8b-8192",
+            model="llama3-70b-8192",
         )
         
         return chat_completion.choices[0].message.content
@@ -413,7 +413,7 @@ class SchedulingAgent:
                             4. Default 1 hour duration"""
                         }
                     ],
-                    model="llama3-70b-8192",
+                    model="llama-3.3-70b-versatile",
                 )
                 
                 llm_response = chat_completion.choices[0].message.content
@@ -572,7 +572,7 @@ def get_groq_welcome(events_today, current_time):
                     "content": f"Events for today: {events_str} Current time: {current_time_str}"
                 }
             ],
-            model="llama3-8b-8192",
+            model="llama3-70b-8192",
             temperature=0.2
         )
         return completion.choices[0].message.content
@@ -654,7 +654,7 @@ class EditOrDeleteIntentAgent:
                     "content": query,
                 }
             ],
-            model="llama3-8b-8192",
+            model="llama3-70b-8192",
         )
         response = chat_completion.choices[0].message.content
         return self.Intents(intent=response)
