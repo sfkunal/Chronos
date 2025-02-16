@@ -1,7 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Send } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import { Rubik } from 'next/font/google';
 import Image from 'next/image';
+
+const rubik = Rubik({ subsets: ['latin'] })
+
 
 const ChatInterface = ({ welcomeMessage, onSubmit, onEventsUpdate }) => {
     const [messages, setMessages] = useState([]);
@@ -109,12 +113,11 @@ const ChatInterface = ({ welcomeMessage, onSubmit, onEventsUpdate }) => {
                             isUser: false
                         }
                     ]);
-
+                    
                     // Fetch updated events after successful event creation
                     const eventsResponse = await fetch('http://127.0.0.1:5000/api/events', {
                         credentials: 'include'
                     });
-
                     if (eventsResponse.ok) {
                         const eventsData = await eventsResponse.json();
                         onEventsUpdate(eventsData.events);
@@ -201,16 +204,16 @@ const ChatInterface = ({ welcomeMessage, onSubmit, onEventsUpdate }) => {
         <div className="flex flex-col h-screen max-w-md mx-auto bg-gray-50 shadow-lg">
             {/* Header */}
             <div className="p-3 border-b flex items-center space-x-3 bg-white">
-                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                    <Image
-                        src="/logo.svg"
-                        alt="Chronos Logo"
-                        width={21}
-                        height={21}
-                        priority
-                    />
+                <Image
+                    src="/logo.svg"
+                    alt="Chronos Logo"
+                    width={21}
+                    height={21}
+                    priority
+                />
+                <div className={rubik.className}>
+                    <h1 className="text-xl font-medium text-gray-800">Chronos</h1>
                 </div>
-                <h1 className="text-xl font-semibold text-gray-800">Chronos</h1>
             </div>
 
             {/* Messages */}
@@ -236,29 +239,29 @@ const ChatInterface = ({ welcomeMessage, onSubmit, onEventsUpdate }) => {
 
             {/* Input area */}
             <div className="p-3 border-t bg-white">
-                <div className="flex items-center space-x-2 relative">
-                    <textarea  // Changed from input to textarea
-                        type="text"
-                        placeholder="Type a message..."
-                        className="h-24 flex-1 py-2 px-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300 align-top resize-none"  // Added align-top and resize-none
-                        value={newMessage}
-                        onChange={(e) => setNewMessage(e.target.value)}
-                        onKeyPress={(e) => {
-                            if (e.key === 'Enter' && !e.shiftKey) {
-                                e.preventDefault();  // Prevent new line on Enter
-                                handleSendMessage();
-                            }
-                        }}
-                        rows="1"  // Start with one row
-                    />
-                    <button
-                        onClick={handleSendMessage}
-                        className="absolute bottom-2 right-2 w-8 h-8 rounded-full bg-gray-400 text-white flex items-center justify-center hover:bg-blue-600 transition"
-                    >
-                        <Send size="50%" />
-                    </button>
-                </div>
+            <div className="flex items-center space-x-2 relative">
+                <textarea  // Changed from input to textarea
+                    type="text"
+                    placeholder="Type a message..."
+                    className="h-24 flex-1 py-2 px-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300 align-top resize-none"  // Added align-top and resize-none
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    onKeyPress={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();  // Prevent new line on Enter
+                            handleSendMessage();
+                        }
+                    }}
+                    rows="1"  // Start with one row
+                />
+                <button
+                    onClick={handleSendMessage}
+                    className="absolute bottom-2 right-2 w-8 h-8 rounded-full bg-gray-400 text-white flex items-center justify-center hover:bg-blue-600 transition"
+                >
+                    <Send size="50%" />
+                </button>
             </div>
+        </div>
         </div>
     );
 };
