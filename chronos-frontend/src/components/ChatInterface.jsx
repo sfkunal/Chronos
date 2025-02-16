@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Send, Mic } from 'lucide-react';
+import { Send } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 
 const ChatInterface = ({ welcomeMessage, onSubmit }) => {
@@ -97,50 +97,6 @@ const ChatInterface = ({ welcomeMessage, onSubmit }) => {
         }
     };
 
-    const handleMicClick = () => {
-        if (isRecording) {
-            mediaRecorder.stop();
-            setIsRecording(false);
-        } else {
-            const audioChunks = [];
-            navigator.mediaDevices.getUserMedia({ audio: true })
-                .then(stream => {
-                    const recorder = new MediaRecorder(stream);
-                    setMediaRecorder(recorder);
-                    recorder.start();
-                    setIsRecording(true);
-    
-                    recorder.ondataavailable = event => {
-                        audioChunks.push(event.data);
-                    };
-    
-                    recorder.onstop = async () => {
-                        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-                        stream.getTracks().forEach(track => track.stop());
-                        const formData = new FormData();
-                        formData.append('audio', audioBlob, 'temp.wav');
-
-                        try {
-                            const response = await fetch('http://127.0.0.1:5000/api/speech-to-text', {
-                                method: 'POST',
-                                credentials: 'include',
-                                body: formData
-                            });
-                            const data = await response.json();
-                            if (data.text) {
-                                setNewMessage(data.text);
-                            } else {
-                                console.error('Error transcribing audio:', data.error);
-                            }
-                        } catch (error) {
-                            console.error('Error sending audio to backend:', error);
-                        }
-                    };
-                })
-                .catch(error => console.error('Error accessing microphone:', error));
-        }
-    };
-
     return (
         <div className="flex flex-col h-screen max-w-md mx-auto bg-gray-50 shadow-lg">
             {/* Header */}
@@ -218,9 +174,6 @@ const ChatInterface = ({ welcomeMessage, onSubmit }) => {
                         className="w-10 h-10 rounded-full bg-blue-500 text-white flex items-center justify-center hover:bg-blue-600 transition"
                     >
                         <Send size="50%" />
-                    </button>
-                    <button onClick={handleMicClick}>
-                        <Mic className={isRecording ? 'text-red-500' : ''} />
                     </button>
                 </div>
             </div>
