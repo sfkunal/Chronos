@@ -143,9 +143,20 @@ const Event = ({ event, style, onClick, dayIndex, setEvents1 }) => {
                         {formatTime(event.start)} - {formatTime(event.end)}
                     </div>
                     {isExpanded && (
-                        <div className="mt-2 opacity-75 whitespace-normal overflow-y-auto max-h-[80px] text-[10px] leading-tight">
-                            {event.description && event.description}
-                        </div>
+                        <>
+                            <div className="mt-2 opacity-75 whitespace-normal overflow-y-auto max-h-[80px] text-[10px] leading-tight">
+                                {event.description && event.description}
+                            </div>
+                            {event.attendees && event.attendees.length > 0 && (
+                                <div className="mt-1 opacity-75 overflow-y-auto max-h-[36px] text-[6px] leading-[12px] italic">
+                                    {event.attendees.map((attendee, index) => (
+                                        <div key={index}>
+                                            {attendee.email}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </>
                     )}
                 </CardContent>
 

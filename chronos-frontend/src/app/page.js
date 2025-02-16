@@ -21,7 +21,8 @@ const transformGoogleEvents = (googleEvents) => {
         start: new Date(event.start.dateTime || event.start.date),
         end: new Date(event.end.dateTime || event.end.date),
         color: getColorFromId(event.colorId), // We'll define this function
-        description: event.description || ''
+        description: event.description || '',
+        attendees: event.attendees || null
     }));
 };
 
