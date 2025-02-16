@@ -288,10 +288,6 @@ const PageLayout = () => {
 
                         {/* Right Column aka Chronos Chatbot */}
                         <div className="col-span-3 h-screen">
-                            {/* <DemoContent
-                                title="Chronos"
-                                className="h-[90vh] bg-[#E4E4E4] rounded-xl"
-                            /> */}
                             <ChatInterface
                                 onSubmit={handleChatSubmit}
                                 welcomeMessage={welcomeMessage}
