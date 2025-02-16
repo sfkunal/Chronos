@@ -266,7 +266,9 @@ const WeeklyCalendar = ({ events, onEventClick }) => {
                                 <DayColumn
                                     key={i}
                                     events={eventsByDay[i]}
-                                    onEventClick={onEventClick} />
+                                    dayIndex={i}
+                                    onEventClick={onEventClick}
+                                />
                             ))}
                         </div>
                     </div>
