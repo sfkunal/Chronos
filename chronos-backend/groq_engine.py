@@ -507,6 +507,47 @@ class SchedulingAgent:
         except Exception as e:
             print(f"Error getting Groq response: {str(e)}")
             return "I couldn't find that information in the calendar."
+        
+
+def get_groq_welcome(events_today):
+    try:
+        from groq import Groq
+        import os
+        from dotenv import load_dotenv
+        
+        load_dotenv()
+        groq_client = Groq(api_key=os.getenv('GROQ_API_KEY'))
+
+        # Convert events_today to string if it's not already
+        events_str = str(events_today) if events_today is not None else "No events found for today."
+
+        completion = groq_client.chat.completions.create(
+            messages=[
+                {
+                    "role": "system",
+                    "content": """You are a calendar assistant. You will be given a data structure of today's events on the calendar.
+                    Your task is to write a brief and informative summary of the user's day ahead. You should humanize the response, but keep it very professional and concise.
+                    That means its okay to mention holidays (ONLY if known), company anniversaries (ONLY if known), things to look forward to, important meetings, etc.
+                    - IMPORTANT: Format it like a company would format meeting minutes. Use markdown formatting to make it look nice.
+                    - Use exact dates and times
+                    -Give 1-2 "important reminders" bullet points beneath the day's scheduling breakdown, but do not assume or hallucinate any information. Only give important reminders that revolve around things that are explictly obvious, like "Prepare for your meeting with Jennifer tonight".
+                    -No redundant information
+                    -Maximum 70 words."""
+                },
+                {
+                    "role": "user",
+                    "content": events_str
+                }
+            ],
+            model="llama3-8b-8192",
+            temperature=0.2
+        )
+        return completion.choices[0].message.content
+    except Exception as e:
+        print(f"Error getting Groq response: {str(e)}")
+        return "My name is Chronos, an AI scheduling assistant. How can I help?"
+
+
 
 # Update the test code
 if __name__ == "__main__":

@@ -1,12 +1,14 @@
 from flask import Flask, jsonify, session, redirect, request, url_for
 from flask_cors import CORS
 import os
+import pytz
+import json
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import Flow
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
 from datetime import datetime, timedelta
-from groq_engine import SchedulingAgent
+from groq_engine import SchedulingAgent, get_groq_welcome
 from search_engine import stringify_event, update_events_in_chroma, search_events
 
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'  # Allow HTTP connections in development
@@ -264,8 +266,40 @@ def schedule_event():
 @app.route('/api/welcome_msg', methods=['POST'])
 def set_welcome_message():
     events = request.get_json()
+    if isinstance(events, str):
+        events = json.loads(events)  # Parse if it's a string
 
-    return jsonify({'message': 'Good morning, Lee.'})
+    events_data = list(events.values())[0]
+
+    print(events_data)
+    la_tz = pytz.timezone('America/Los_Angeles')
+    today = datetime.now(la_tz).date()
+
+    # Filter function
+    def is_event_today(event):
+        try:
+            # Parse the datetime string from the event
+            event_datetime = datetime.fromisoformat(
+                event['start']['dateTime'].replace('Z', '+00:00')
+            )
+            
+            # Convert to LA timezone if different
+            if event['start']['timeZone'] != 'America/Los_Angeles':
+                event_datetime = event_datetime.astimezone(la_tz)
+                
+            # Compare only the date portion
+            return event_datetime.date() == today
+            
+        except (KeyError, ValueError):
+            return False
+    
+    # Filter the events
+    events_today = list(filter(is_event_today, events_data))
+        
+    day_summary = get_groq_welcome(events_today)
+    print(day_summary)
+
+    return jsonify({'message': day_summary})
 
 
 if __name__ == '__main__':

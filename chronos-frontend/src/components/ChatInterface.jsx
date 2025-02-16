@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Send } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 
 const ChatInterface = ({ welcomeMessage, onSubmit }) => {
     console.log('in chat interface,', welcomeMessage);
@@ -94,7 +95,22 @@ const ChatInterface = ({ welcomeMessage, onSubmit }) => {
                                     : 'bg-white text-gray-800 border border-gray-200 rounded-bl-none'}
                             `}
                         >
-                            {message.text}
+                            <ReactMarkdown
+                                components={{
+                                    // Style markdown elements with Tailwind classes
+                                    h1: ({node, ...props}) => <h1 className="text-2xl font-bold mb-2" {...props} />,
+                                    h2: ({node, ...props}) => <h2 className="text-xl font-bold mb-2" {...props} />,
+                                    h3: ({node, ...props}) => <h3 className="text-lg font-bold mb-2" {...props} />,
+                                    p: ({node, ...props}) => <p className="mb-2" {...props} />,
+                                    ul: ({node, ...props}) => <ul className="list-disc ml-4 mb-2" {...props} />,
+                                    ol: ({node, ...props}) => <ol className="list-decimal ml-4 mb-2" {...props} />,
+                                    li: ({node, ...props}) => <li className="mb-1" {...props} />,
+                                    strong: ({node, ...props}) => <strong className="font-bold" {...props} />,
+                                    em: ({node, ...props}) => <em className="italic" {...props} />,
+                                }}
+                            >
+                                {message.text}
+                            </ReactMarkdown>
                         </div>
                     </div>
                 ))}
