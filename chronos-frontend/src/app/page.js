@@ -123,8 +123,6 @@ function CalendarPage({ selectedMonthDate, events1, setEvents1 }) {
         }
     }, [events1]);
 
-    console.log('Calendar Events:', events1);
-
     const handleEventClick = (event) => {
         setSelectedEvent(event);
     };
@@ -201,8 +199,6 @@ const PageLayout = () => {
         fetchWelcomeMessage();
     }, [events1]);
 
-    console.log(welcomeMessage);
-
     const handlePreferencesChange = (newPreferences) => {
         setUserPreferences(newPreferences);
     };
@@ -220,9 +216,7 @@ const PageLayout = () => {
                     preferences: userPreferences
                 })
             });
-            console.log('Response:', response);
             const responseData = await response.json();
-            console.log('Response data:', responseData);
 
             if (!response.ok) {
                 throw new Error(responseData.message || 'Failed to schedule event');
