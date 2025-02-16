@@ -134,7 +134,11 @@ function CalendarPage({ events1, setEvents1 }) {
 
     return (
         <div className="container h-full pt-[2%] relative">
-            <WeeklyCalendar events={isLoading ? [] : events} onEventClick={handleEventClick} />
+            <WeeklyCalendar 
+                events={isLoading ? [] : events} 
+                onEventClick={handleEventClick}
+                setEvents1={setEvents1}
+            />
 
             {isLoading && (
                 <div className="absolute inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center">
@@ -219,12 +223,23 @@ const PageLayout = () => {
                 })
             });
             console.log('Response:', response);
-            // Get the error message from the response
             const responseData = await response.json();
             console.log('Response data:', responseData);
+            
             if (!response.ok) {
                 throw new Error(responseData.message || 'Failed to schedule event');
             }
+
+            // Fetch updated events after successful scheduling
+            const eventsResponse = await fetch('http://127.0.0.1:5000/api/events', {
+                credentials: 'include'
+            });
+
+            if (eventsResponse.ok) {
+                const eventsData = await eventsResponse.json();
+                setEvents1(eventsData.events);  // Update events
+            }
+
             return responseData;
         } catch (error) {
             console.error('Error scheduling event:', error);
