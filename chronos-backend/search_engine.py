@@ -23,7 +23,7 @@ class SearchEngine:
             self.client = chromadb.HttpClient(
                 ssl=True,
                 host='api.trychroma.com',
-                tenant='eeeaf9e6-bf44-43c7-9409-46d930556a39',
+                tenant=os.getenv('CHROMA_TENANT_KEY'),
                 database='Chronos',
                 headers={
                     'x-chroma-token': os.getenv('CHROMA_API_KEY')
