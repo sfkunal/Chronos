@@ -12,6 +12,8 @@ from groq_engine import SchedulingAgent, EditOrDeleteIntentAgent, get_groq_welco
 from search_engine import stringify_event, update_events_in_chroma, search_events
 from groq import Groq
 import json
+import os
+from speech_to_text import SpeechToTextAssistant
 
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'  # Allow HTTP connections in development
 
@@ -439,6 +441,7 @@ def schedule_event():
             'message': f'Failed to process scheduling request: {str(e)}'
         }), 500, response_headers
 
+
 @app.route('/api/editOrDelete', methods=['POST'])
 def edit_or_delete():
     response_headers = {
@@ -502,7 +505,6 @@ def set_welcome_message():
 
     events_data = list(events.values())[0]
 
-    print(events_data)
     la_tz = pytz.timezone('America/Los_Angeles')
     today_info = datetime.now(la_tz)
     today = datetime.now(la_tz).date()
@@ -529,9 +531,43 @@ def set_welcome_message():
     events_today = list(filter(is_event_today, events_data))
         
     day_summary = get_groq_welcome(events_today, today_info.ctime())
-    print(day_summary)
+    # print(day_summary)
 
     return jsonify({'message': day_summary})
+
+
+speech_assistant = SpeechToTextAssistant()
+
+@app.route('/api/speech-to-text', methods=['POST'])
+def speech_to_text():
+    if 'audio' not in request.files:
+        return jsonify({'error': 'No audio file provided'}), 400
+
+    try:
+        audio_file = request.files['audio']
+        audio_data = audio_file.read()
+        
+        # Process the audio data
+        audio_bytes = speech_assistant.process_audio_data(audio_data)
+        
+        # Transcribe using Groq
+        transcribed_text = speech_assistant.speech_to_text_g(audio_bytes)
+        print('*'*20)
+        print(transcribed_text)
+        print('*'*20)
+
+        
+        if transcribed_text:
+            return jsonify({'text': transcribed_text})
+        else:
+            return jsonify({'error': 'Failed to transcribe audio'}), 500
+            
+    except Exception as e:
+        print(f"Error in speech to text: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+    
+
+
 
 
 if __name__ == '__main__':

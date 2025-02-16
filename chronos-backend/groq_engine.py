@@ -270,7 +270,7 @@ class SchedulingAgent:
         self.service = service
         self.people_service = people_service
         self.contacts = ContactAgent(people_service).email_lookup()
-        print("contacts", self.contacts)
+        # print("contacts", self.contacts)
         pacific_tz = pytz.timezone('America/Los_Angeles')
         now = datetime.now(pacific_tz)
         current_date = now.strftime('%Y-%m-%d')
@@ -375,7 +375,7 @@ class SchedulingAgent:
             intent = self.intent_agent.extract_intent(action_query)
             preference_rules = self.preferences_agent.get_rule_based_preferences(preferences)
 
-            print("action_query", action_query)
+            # print("action_query", action_query)
             
             if intent.intent in ["CREATE", "EDIT"]:
                 chat_completion = self.groq_client.chat.completions.create(
@@ -403,7 +403,7 @@ class SchedulingAgent:
                 )
                 
                 llm_response = chat_completion.choices[0].message.content
-                print("Raw LLM Response:", llm_response)  # Debug print
+                # print("Raw LLM Response:", llm_response)  # Debug print
                 
                 # Parse and validate the response
                 try:

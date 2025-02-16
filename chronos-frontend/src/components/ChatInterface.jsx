@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Send } from 'lucide-react';
+import { Send, Mic } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 
 const ChatInterface = ({ welcomeMessage, onSubmit }) => {
     console.log('in chat interface,', welcomeMessage);
     const [messages, setMessages] = useState([]);
+    const [isRecording, setIsRecording] = useState(false);
 
     useEffect(() => {
         if (welcomeMessage) {
@@ -66,6 +67,70 @@ const ChatInterface = ({ welcomeMessage, onSubmit }) => {
             console.error('Error sending message:', error);
         }
     };
+
+    const [mediaRecorder, setMediaRecorder] = useState(null);
+
+    const handleMicClick = () => {
+        console.log('MIC PRESSED')
+        if (isRecording) {
+            mediaRecorder.stop();
+            setIsRecording(false);
+        } else {
+            const audioChunks = [];
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(stream => {
+                    const recorder = new MediaRecorder(stream);
+                    setMediaRecorder(recorder);
+                    recorder.start();
+                    setIsRecording(true);
+    
+                    recorder.ondataavailable = event => {
+                        audioChunks.push(event.data);
+                    };
+    
+                    recorder.onstop = async () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                        stream.getTracks().forEach(track => track.stop());
+                        const formData = new FormData();
+                        formData.append('audio', audioBlob, 'temp.wav');
+                        console.log(formData);
+                        console.log('Audio blob size:', audioBlob.size);
+
+                                           // Create temporary URL for audio playback
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    
+                    // Create and play audio element (for debugging)
+                    const audio = new Audio(audioUrl);
+                    audio.play();
+                    
+                    // Log audio details
+                    console.log('Audio duration:', audioBlob.duration);
+                    console.log('Audio blob type:', audioBlob.type);
+                    console.log('Audio blob size:', audioBlob.size);
+
+    
+                        try {
+                            const response = await fetch('http://127.0.0.1:5000/api/speech-to-text', {
+                                method: 'POST',
+                                credentials: 'include',
+                                body: formData
+                            });
+                            const data = await response.json();
+                            if (data.text) {
+                                setNewMessage(data.text);
+                            } else {
+                                console.error('Error transcribing audio:', data.error);
+                            }
+                        } catch (error) {
+                            console.error('Error sending audio to backend:', error);
+                        }
+                    };
+                })
+                .catch(error => console.error('Error accessing microphone:', error));
+        }
+    };
+
+
 
     return (
         <div className="flex flex-col h-screen max-w-md mx-auto bg-gray-50 shadow-lg">
@@ -134,6 +199,9 @@ const ChatInterface = ({ welcomeMessage, onSubmit }) => {
                         className="w-10 h-10 rounded-full bg-blue-500 text-white flex items-center justify-center hover:bg-blue-600 transition"
                     >
                         <Send size="50%" />
+                    </button>
+                    <button onClick={handleMicClick}>
+                        <Mic className={isRecording ? 'text-red-500' : ''} />
                     </button>
                 </div>
             </div>
