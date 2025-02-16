@@ -113,7 +113,7 @@ const ChatInterface = ({ welcomeMessage, onSubmit, onEventsUpdate }) => {
                             isUser: false
                         }
                     ]);
-                    
+
                     // Fetch updated events after successful event creation
                     const eventsResponse = await fetch('http://127.0.0.1:5000/api/events', {
                         credentials: 'include'
@@ -256,9 +256,9 @@ const ChatInterface = ({ welcomeMessage, onSubmit, onEventsUpdate }) => {
                 />
                 <button
                     onClick={handleSendMessage}
-                    className="absolute bottom-2 right-2 w-8 h-8 rounded-full bg-gray-400 text-white flex items-center justify-center hover:bg-blue-600 transition"
+                    className="absolute bottom-2 right-2 w-10 h-10 rounded-full bg-gray-400 text-white flex items-center justify-center hover:bg-blue-600 transition"
                 >
-                    <Send size="50%" />
+                    <Send size={18} />
                 </button>
             </div>
         </div>

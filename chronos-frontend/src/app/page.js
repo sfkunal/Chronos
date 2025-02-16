@@ -254,12 +254,12 @@ const PageLayout = () => {
                         {/* Left Column aka Month Calendar View + Preferences */}
                         <div className="col-span-2 h-screen border-r border-black-200 shadow-md">
                             {/* Top Left Month Calendar View */}
-                            <div className="h-[40vh]">
+                            <div className="h-[40vh] mr-1">
                                 <Calendar
                                     mode="single"
                                     selected={date}
                                     onSelect={setDate}
-                                    className="h-full"
+                                    className=""
                                 />
                             </div>
 

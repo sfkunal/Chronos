@@ -40,8 +40,9 @@ const Preferences = ({ onPreferencesChange }) => {
   };
 
   return (
-    <div className="h-full p-3 bg-gray-50 rounded-xl flex flex-col overflow-hidden">
-      <h2 className="text-2xl font-semibold text-gray-700 mb-4">Preferences</h2>
+    <div className="border-t h-full p-3 bg-gray-50 rounded-xl flex flex-col overflow-hidden">
+      <h2 className="text-2xl font-semibold text-gray-700">Preferences</h2>
+      <hr className='mt-2 mb-4' />
 
       {/* Preferences List */}
       <div className="flex-1 overflow-y-auto mb-4 min-h-0">
