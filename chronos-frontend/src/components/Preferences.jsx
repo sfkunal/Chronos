@@ -52,7 +52,7 @@ const Preferences = ({ onPreferencesChange }) => {
             {preferences.map((pref, index) => (
               <li
                 key={index}
-                className="p-2 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow relative group"
+                className="p-2 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow relative group"
               >
                 {pref}
                 <button
