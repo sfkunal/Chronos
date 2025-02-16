@@ -33,7 +33,7 @@ class IntentAgent():
         self.system_prompt = """You are an intent classifier for a calendar application. Your task is to analyze user requests and classify them into one of four possible intents: CREATE, DELETE, EDIT, or UNKNOWN.
 
             Guidelines for classification:
-            - CREATE: Use when user wants to make a completely new calendar event with no reference to existing events (e.g., "let's meet tomorrow", "schedule a call")
+            - CREATE: Use when user wants to make a completely new calendar event with no reference to existing events (e.g., "let's meet tomorrow", "schedule a call", "add a meeting", "book a gym session")
             - DELETE: Use when user wants to remove an existing event (e.g., "cancel meeting", "remove appointment")
             - EDIT: Use when user wants to modify an existing event or mentions changing times/dates (e.g., "move meeting to 3pm", "instead of tomorrow", "reschedule to Wednesday", "change the time")
             - UNKNOWN: Use only if the request doesn't clearly fit the above categories
@@ -309,7 +309,7 @@ class SchedulingAgent:
             }}
         ]
         ```
-
+        Extremely important: Follow the format. The response MUST BE AN ARRAY OF JSON OBJECTS, no matter the number of events.
         Rules:
         1. Times must be in exact ISO format with timezone offset
         2. Only summary, description, start, and end are required
