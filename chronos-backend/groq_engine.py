@@ -472,6 +472,41 @@ class SchedulingAgent:
                 'traceback': str(e.__traceback__)
             }
 
+    @staticmethod
+    def get_groq_response(prompt):
+        try:
+            from groq import Groq
+            import os
+            from dotenv import load_dotenv
+            
+            load_dotenv()
+            groq_client = Groq(api_key=os.getenv('GROQ_API_KEY'))
+            
+            completion = groq_client.chat.completions.create(
+                messages=[
+                    {
+                        "role": "system",
+                        "content": """You are a precise calendar assistant that ONLY states facts directly from event information.
+                        - Never make assumptions about events
+                        - Only use explicitly stated information
+                        - Use exact dates and times
+                        - Keep responses under 20 words
+                        - If information isn't in the event details, say so"""
+                    },
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ],
+                model="llama3-70b-8192",
+                temperature=0.1  # Add low temperature for more precise responses
+            )
+            
+            return completion.choices[0].message.content
+        except Exception as e:
+            print(f"Error getting Groq response: {str(e)}")
+            return "I couldn't find that information in the calendar."
+
 # Update the test code
 if __name__ == "__main__":
     try:

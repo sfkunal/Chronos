@@ -4,11 +4,12 @@ import TimeGrid from './TimeGrid';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { startOfWeek, endOfWeek, isWithinInterval, addWeeks, subWeeks, format } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Search } from 'lucide-react';
 
 const WeeklyCalendar = ({ events, onEventClick }) => {
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const [currentDate, setCurrentDate] = useState(new Date());
+    const [searchQuery, setSearchQuery] = useState('');
 
     // Get current week's start and end dates
     const weekStart = startOfWeek(currentDate);
@@ -31,6 +32,21 @@ const WeeklyCalendar = ({ events, onEventClick }) => {
         return currentWeekEvents.filter(event => event.start.getDay() === index);
     });
 
+    const handleSearch = async (e) => {
+        e.preventDefault();
+        
+        if (searchQuery.length > 2) {
+            try {
+                const response = await fetch(`http://127.0.0.1:5000/api/search?q=${encodeURIComponent(searchQuery)}`);
+                const data = await response.json();
+                console.log('response:', data);
+                // console.log('answer:', data.answer);
+            } catch (error) {
+                console.error('Error searching events:', error);
+            }
+        }
+    };
+
     return (
         <div className="w-full h-full flex flex-col overflow-hidden">
             <div className="flex justify-between items-center mb-4 px-4">
@@ -38,11 +54,13 @@ const WeeklyCalendar = ({ events, onEventClick }) => {
                     <span className="font-bold">{format(currentDate, 'MMMM')}</span>
                     <span className="font-normal"> {format(currentDate, 'yyyy')}</span></h1>
                 <div className="flex items-center justify-end px-4 py-2 bg-white-50">
-                    <div className="relative">
+                    <form onSubmit={handleSearch} className="relative flex items-center">
                         <input
                             type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
                             placeholder="Search events..."
-                            className="pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-64"
+                            className="pl-10 pr-4 py-2 border rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-64"
                         />
                         <svg
                             className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400"
@@ -55,7 +73,13 @@ const WeeklyCalendar = ({ events, onEventClick }) => {
                         >
                             <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
-                    </div>
+                        <button
+                            type="submit"
+                            className="px-4 py-2 bg-blue-500 text-white rounded-r-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                            <Search className="h-5 w-5" />
+                        </button>
+                    </form>
                 </div>
             </div>
             {/* Header with navigation and week display */}

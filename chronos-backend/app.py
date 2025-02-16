@@ -164,11 +164,27 @@ def search_calendar():
         if search_results is None:
             return jsonify({'error': 'Search failed'}), 500
             
-        # Format the response
+        # concatenate the best 3 matches
+        best_matches = search_results['documents'][0][:3]
+        prompt = f"""You are looking at a calendar event with this exact information: "{best_matches}"
+
+            Question: "{query}"
+            Today's date: {datetime.now().strftime("%Y-%m-%d")}
+
+            Rules for your response:
+            1. ONLY use information explicitly stated in the event details
+            2. If asked about timing, include the EXACT date and time from the event
+            3. If information is not in the event details, say "I don't see that information in the event"
+            4. Keep responses under 20 words
+            5. Do not make assumptions about recurring events
+            6. Keep in mind today's date is {datetime.now().strftime("%Y-%m-%d")}
+
+            Respond with ONLY the answer, no explanations or pleasantries."""
+        
+        groq_response = SchedulingAgent.get_groq_response(prompt)
         response = {
-            'query': query,
-            'matches': search_results['documents'][0],  # List of matching document texts
-            'distances': search_results['distances'][0], # Similarity scores
+            'matches': best_matches,
+            'answer': groq_response
         }
         
         return jsonify(response)
@@ -184,13 +200,11 @@ def auth_status():
 
 @app.route('/api/schedule', methods=['POST'])
 def schedule_event():
-    # Add CORS headers explicitly
     response_headers = {
         'Access-Control-Allow-Origin': 'http://localhost:3000',
         'Access-Control-Allow-Credentials': 'true'
     }
     
-    # Handle preflight request
     if request.method == 'OPTIONS':
         return ('', 204, response_headers)
 
