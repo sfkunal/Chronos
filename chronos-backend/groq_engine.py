@@ -530,7 +530,7 @@ def get_groq_welcome(events_today):
                     That means its okay to mention holidays (ONLY if known), company anniversaries (ONLY if known), things to look forward to, important meetings, etc.
                     - IMPORTANT: Format it like a company would format meeting minutes. Use markdown formatting to make it look nice.
                     - Use exact dates and times
-                    -Give 1-2 "important reminders" bullet points beneath the day's scheduling breakdown, but do not assume or hallucinate any information. Only give important reminders that revolve around things that are explictly obvious, like "Prepare for your meeting with Jennifer tonight".
+                    -Give 1-2 "important reminders" bullet points beneath the day's scheduling breakdown, but do not assume or hallucinate any information. Only give important reminders that revolve around things that are explictly obvious. Here is an example of an important reminder: "Prepare for your meeting with Jennifer tonight". THIS IS AN EXAMPLE, DO NOT USE THIS FOR THE USER.
                     -No redundant information
                     -Maximum 70 words."""
                 },
