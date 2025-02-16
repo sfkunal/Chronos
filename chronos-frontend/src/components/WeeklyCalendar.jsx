@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import DayColumn from './DayColumn';
 import TimeGrid from './TimeGrid';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -13,6 +13,7 @@ const WeeklyCalendar = ({ events, onEventClick }) => {
     const [isSearchExpanded, setIsSearchExpanded] = useState(false);
     const [searchResults, setSearchResults] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
+    const scrollAreaRef = useRef(null);
 
     // Get current week's start and end dates
     const weekStart = startOfWeek(currentDate);
@@ -63,6 +64,17 @@ const WeeklyCalendar = ({ events, onEventClick }) => {
         document.addEventListener('keydown', handleEscape);
         return () => document.removeEventListener('keydown', handleEscape);
     }, []);
+
+    useEffect(() => {
+        if (scrollAreaRef.current) {
+            // 6 AM = 6 hours * 60 pixels per hour
+            const scrollToPosition = 6 * 60;
+            const viewport = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+            if (viewport) {
+                viewport.scrollTop = scrollToPosition;
+            }
+        }
+    }, []); // Empty dependency array means this runs once when component mounts
 
     return (
         <div className="w-full h-full flex flex-col overflow-hidden">
@@ -246,7 +258,7 @@ const WeeklyCalendar = ({ events, onEventClick }) => {
 
             {/* Scrollable area for hours and events */}
             <div className="flex-1 flex overflow-hidden">
-                <ScrollArea className="flex-1 h-full">
+                <ScrollArea ref={scrollAreaRef} className="flex-1 h-full">
                     <div className="flex">
                         <TimeGrid />
                         <div className="flex flex-1 h-[1440px]">
