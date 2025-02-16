@@ -286,6 +286,7 @@ class SchedulingAgent:
         - "next Monday, this Friday, and Saturday"
 
         Your output must be valid JSON and be an array of events matching this structure exactly:
+        ```
         [
             {{
                 "summary": "Brief title of event",
@@ -307,13 +308,14 @@ class SchedulingAgent:
                 }}
             }}
         ]
+        ```
 
         Rules:
         1. Times must be in exact ISO format with timezone offset
         2. Only summary, description, start, and end are required
         3. Default duration is 1 hour if not specified
         4. Use America/Los_Angeles timezone
-        5. Extract attendee ONLY if emails are present in the query
+        5. Extract attendee ONLY if emails are present in the query. If there are no emails present in the query, the "email" field must be [] NOT "".
         6. Extract location if present
         7. Always set reminders.useDefault to true
         8. Return an array even for single events
@@ -336,7 +338,7 @@ class SchedulingAgent:
                 events_list = events_data
             else:
                 raise ValueError(f"Unexpected events data type: {type(events_data)}")
-            
+                        
             if not isinstance(events_list, list):
                 events_list = [events_list]  # Convert single event to list
                 
