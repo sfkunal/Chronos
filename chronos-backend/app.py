@@ -294,6 +294,42 @@ class CalendarAPI:
                 'details': str(e)
             }
 
+    def create_calendar_event(self, event_details):
+        try:
+            # Ensure timezone is properly set for the event
+            event_body = {
+                'summary': event_details['summary'],
+                'description': event_details.get('description', ''),
+                'start': {
+                    'dateTime': event_details['start'],
+                    'timeZone': 'America/Los_Angeles'  # Or your desired timezone
+                },
+                'end': {
+                    'dateTime': event_details['end'],
+                    'timeZone': 'America/Los_Angeles'  # Or your desired timezone
+                }
+            }
+            
+            # Add attendees if present
+            if 'attendees' in event_details:
+                event_body['attendees'] = event_details['attendees']
+            
+            event = self.service.events().insert(
+                calendarId='primary',
+                body=event_body
+            ).execute()
+            
+            return {
+                'status': 'success',
+                'message': 'Event successfully created',
+                'event': event
+            }
+        except Exception as e:
+            return {
+                'status': 'error',
+                'message': f'Failed to create event: {str(e)}'
+            }
+
 # Create global instances
 calendar_api = CalendarAPI()
 scheduling_agent = None  # Will be initialized after authentication

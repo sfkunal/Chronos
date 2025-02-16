@@ -140,7 +140,7 @@ const Event = ({ event, style, onClick, dayIndex, setEvents1 }) => {
                     "p-2 text-white",
                     isExpanded ? "text-sm" : "text-xs"
                 )}>
-                    <div className="font-medium truncate">{event.title}</div>
+                    <div className="font-medium">{event.title}</div>
                     <div className="opacity-90">
                         {formatTime(event.start)} - {formatTime(event.end)}
                     </div>
