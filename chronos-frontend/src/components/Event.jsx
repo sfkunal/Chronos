@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { toast } from "sonner";
 
-const Event = ({ event, style, onClick, dayIndex }) => {
+const Event = ({ event, style, onClick, dayIndex, setEvents1 }) => {
     const [isExpanded, setIsExpanded] = useState(false);
     const [noteText, setNoteText] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -80,6 +80,16 @@ const Event = ({ event, style, onClick, dayIndex }) => {
             if (data.status === 'success') {
                 toast.success(data.message);
                 setIsExpanded(false);
+                
+                // Fetch updated events
+                const eventsResponse = await fetch('http://127.0.0.1:5000/api/events', {
+                    credentials: 'include'
+                });
+
+                if (eventsResponse.ok) {
+                    const eventsData = await eventsResponse.json();
+                    setEvents1(eventsData.events);  // Update events
+                }
             } else if (data.status === 'unknown') {
                 toast.warning(data.message);
             } else {

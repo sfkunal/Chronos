@@ -1,7 +1,7 @@
 import React from 'react';
 import Event from './Event';
 
-const DayColumn = ({ events, onEventClick, dayIndex }) => {
+const DayColumn = ({ events, onEventClick, dayIndex, setEvents1 }) => {
     return (
         <div className="flex-1 relative border-r last:border-r-0">
             {/* Render hour guidelines */}
@@ -30,6 +30,7 @@ const DayColumn = ({ events, onEventClick, dayIndex }) => {
                         dayIndex={dayIndex}
                         style={{ top: `${top}px`, height: `${height}px` }}
                         onClick={() => onEventClick?.(event)}
+                        setEvents1={setEvents1}
                     />
                 );
             })}

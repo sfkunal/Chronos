@@ -6,7 +6,8 @@ import { startOfWeek, endOfWeek, isWithinInterval, addWeeks, subWeeks, format } 
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Search } from 'lucide-react';
 
-const WeeklyCalendar = ({ events, onEventClick }) => {
+
+const WeeklyCalendar = ({ events, onEventClick, setEvents1 }) => {
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const [currentDate, setCurrentDate] = useState(new Date());
     const [searchQuery, setSearchQuery] = useState('');
@@ -268,6 +269,7 @@ const WeeklyCalendar = ({ events, onEventClick }) => {
                                     events={eventsByDay[i]}
                                     dayIndex={i}
                                     onEventClick={onEventClick}
+                                    setEvents1={setEvents1}
                                 />
                             ))}
                         </div>
