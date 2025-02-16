@@ -426,10 +426,21 @@ class SchedulingAgent:
                     # Clean up the JSON string
                     if isinstance(llm_response, str):
                         json_str = llm_response.strip()
+                        # Try to extract JSON from markdown code blocks if present
                         if "```json" in json_str:
                             json_str = json_str.split("```json")[1].split("```")[0]
                         elif "```" in json_str:
                             json_str = json_str.split("```")[1].split("```")[0]
+                        # If response starts with { or [, treat it as raw JSON
+                        elif json_str.startswith('{') or json_str.startswith('['):
+                            json_str = json_str
+                        else:
+                            # Try to find JSON object/array within the response
+                            import re
+                            json_match = re.search(r'(\{.*\}|\[.*\])', json_str, re.DOTALL)
+                            if json_match:
+                                json_str = json_match.group(0)
+                            
                         events_list = json.loads(json_str)
                     else:
                         events_list = llm_response
