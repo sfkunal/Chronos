@@ -144,8 +144,8 @@ const WeeklyCalendar = ({ events, onEventClick }) => {
                             <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
                                 <div className="p-4 max-h-96 overflow-y-auto">
                                     {isLoading ? (
-                                        <div className="flex items-center justify-center py-8">
-                                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                                        <div className="flex items-center py-2">
+                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
                                             <span className="ml-3 text-sm text-gray-600">Searching...</span>
                                         </div>
                                     ) : (
