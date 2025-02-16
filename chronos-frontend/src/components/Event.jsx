@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import { toast } from "sonner";
 
 const Event = ({ event, style, onClick, dayIndex }) => {
     const [isExpanded, setIsExpanded] = useState(false);
     const [noteText, setNoteText] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
     const cardRef = useRef(null);
     const textareaRef = useRef(null);
     
@@ -23,12 +25,6 @@ const Event = ({ event, style, onClick, dayIndex }) => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, [isExpanded]);
-
-    useEffect(() => {
-        if (isExpanded) {
-            console.log('Expanded event data:', event);
-        }
-    }, [isExpanded, event]);
 
     const formatTime = (date) => {
         return date.toLocaleTimeString('en-US', {
@@ -56,6 +52,58 @@ const Event = ({ event, style, onClick, dayIndex }) => {
     const adjustTextareaHeight = (element) => {
         element.style.height = 'auto';
         element.style.height = `${element.scrollHeight}px`;
+    };
+
+    const handleEditOrDelete = async (query) => {
+        setIsLoading(true);
+        try {
+            const response = await fetch('http://127.0.0.1:5000/api/editOrDelete', {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    query,
+                    event: {
+                        id: event.id,
+                        summary: event.title,
+                        description: event.description,
+                        start: event.start,
+                        end: event.end,
+                    }
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.status === 'success') {
+                toast.success(data.message);
+                setIsExpanded(false);
+            } else if (data.status === 'unknown') {
+                toast.warning(data.message);
+            } else {
+                toast.error(data.message);
+            }
+
+            console.log('Edit/Delete response:', data);
+            
+        } catch (error) {
+            console.error('Error processing edit/delete request:', error);
+            toast.error('Failed to process your request. Please try again.');
+        } finally {
+            setIsLoading(false);
+            setNoteText('');
+        }
+    };
+
+    const handleKeyDown = (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            if (noteText.trim()) {
+                handleEditOrDelete(noteText);
+            }
+        }
     };
 
     return (
@@ -95,18 +143,30 @@ const Event = ({ event, style, onClick, dayIndex }) => {
 
                 {isExpanded && (
                     <div className="bg-white w-full p-1 pt-2">
-                        <textarea
-                            ref={textareaRef}
-                            value={noteText}
-                            onChange={(e) => {
-                                setNoteText(e.target.value);
-                                adjustTextareaHeight(e.target);
-                            }}
-                            placeholder="Modify or delete event?"
-                            className="w-full px-2 py-1 text-[10px] leading-tight placeholder:text-gray-400 resize-none min-h-[24px] max-h-[100px] overflow-y-auto focus:outline-none text-gray-700 rounded-[5px] border border-gray-200"
-                            onClick={(e) => e.stopPropagation()}
-                            onFocus={(e) => adjustTextareaHeight(e.target)}
-                        />
+                        <div className="relative">
+                            <textarea
+                                ref={textareaRef}
+                                value={noteText}
+                                onChange={(e) => {
+                                    setNoteText(e.target.value);
+                                    adjustTextareaHeight(e.target);
+                                }}
+                                onKeyDown={handleKeyDown}
+                                placeholder="Modify or delete event?"
+                                disabled={isLoading}
+                                className={cn(
+                                    "w-full px-2 py-1 text-[10px] leading-tight placeholder:text-gray-400 resize-none min-h-[24px] max-h-[100px] overflow-y-auto focus:outline-none text-gray-700 rounded-[5px] border border-gray-200",
+                                    isLoading && "opacity-50"
+                                )}
+                                onClick={(e) => e.stopPropagation()}
+                                onFocus={(e) => adjustTextareaHeight(e.target)}
+                            />
+                            {isLoading && (
+                                <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-50">
+                                    <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                                </div>
+                            )}
+                        </div>
                     </div>
                 )}
             </div>

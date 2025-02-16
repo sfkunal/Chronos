@@ -13,8 +13,6 @@ const DayColumn = ({ events, onEventClick, dayIndex }) => {
                 />
             ))}
 
-            console.log(events);
-
             {/* Render events */}
             {events.map(event => {
                 const startHour = event.start.getHours();
