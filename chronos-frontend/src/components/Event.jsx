@@ -92,13 +92,10 @@ const Event = ({ event, style, onClick, dayIndex, setEvents1 }) => {
                 }
             } else if (data.status === 'unknown') {
                 toast.warning(data.message);
-            } else {
-                toast.error(data.message);
             }
             
         } catch (error) {
             console.error('Error processing edit/delete request:', error);
-            toast.error('Failed to process your request. Please try again.');
         } finally {
             setIsLoading(false);
             setNoteText('');
