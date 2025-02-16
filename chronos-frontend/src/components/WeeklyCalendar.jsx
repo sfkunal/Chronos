@@ -90,7 +90,7 @@ const WeeklyCalendar = ({ events, onEventClick, setEvents1, selectedDate }) => {
     return (
         <div className="w-full h-full flex flex-col overflow-hidden">
             <div className="flex justify-between items-center mb-4 px-4">
-                <h1 className="text-4xl font-bold mb-4">
+                <h1 className="text-4xl font-bold">
                     <span className="font-bold">{format(currentDate, 'MMMM')}</span>
                     <span className="font-normal"> {format(currentDate, 'yyyy')}</span></h1>
                 <div className="flex items-center justify-end px-4 py-2 bg-white">

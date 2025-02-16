@@ -264,9 +264,9 @@ const PageLayout = () => {
                     <div className="grid grid-cols-12 gap-4">
 
                         {/* Left Column aka Month Calendar View + Preferences */}
-                        <div className="col-span-2 h-screen border-r border-black-200">
+                        <div className="col-span-2 h-screen border-r border-black-200 shadow-md">
                             {/* Top Left Month Calendar View */}
-                            <div className="h-[35vh]">
+                            <div className="h-[40vh]">
                                 <Calendar
                                     mode="single"
                                     selected={date}
@@ -276,7 +276,7 @@ const PageLayout = () => {
                             </div>
 
                             {/* Preferences */}
-                            <div className="h-[65vh]">
+                            <div className="h-[60vh]">
                                 <Preferences onPreferencesChange={handlePreferencesChange} />
                             </div>
                         </div>

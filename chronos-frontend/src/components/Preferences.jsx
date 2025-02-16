@@ -41,7 +41,7 @@ const Preferences = ({ onPreferencesChange }) => {
   return (
     <div className="h-full p-4 bg-gray-50 rounded-xl flex flex-col overflow-hidden">
       <h2 className="text-2xl font-semibold text-gray-700 mb-4">Preferences</h2>
-      
+
       {/* Preferences List */}
       <div className="flex-1 overflow-y-auto mb-4 min-h-0">
         {preferences.length === 0 ? (
@@ -49,8 +49,8 @@ const Preferences = ({ onPreferencesChange }) => {
         ) : (
           <ul className="space-y-2">
             {preferences.map((pref, index) => (
-              <li 
-                key={index} 
+              <li
+                key={index}
                 className="p-2 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow relative group"
               >
                 {pref}
