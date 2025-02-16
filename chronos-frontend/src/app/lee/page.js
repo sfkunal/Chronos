@@ -43,12 +43,14 @@ const getColorFromId = (colorId) => {
     return colorMap[colorId] || colorMap.default;
 };
 
-function CalendarPage({ events1, setEvents1 }) {
+function CalendarPage({ selectedMonthDate, events1, setEvents1 }) {
     const [events, setEvents] = useState([]);
     const [selectedEvent, setSelectedEvent] = useState(null);
     const [isLoggedIn, setIsLoggedIn] = React.useState(false);
     const [authToken, setAuthToken] = React.useState(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [selectedDate, setSelectedDate] = useState(selectedMonthDate ?? new Date())
+
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
@@ -65,6 +67,12 @@ function CalendarPage({ events1, setEvents1 }) {
             }
         }
     }, []);
+
+    useEffect(() => {
+        if (selectedMonthDate) {
+            setSelectedDate(selectedMonthDate);
+        }
+    }, [selectedMonthDate]);
 
     useEffect(() => {
         const checkAuthAndFetchEvents = async () => {
@@ -103,30 +111,17 @@ function CalendarPage({ events1, setEvents1 }) {
         }
     }, [isLoggedIn]);
 
-    // Transform and combine events when events1 changes
+    // Modify this useEffect to remove the artificial delay
     useEffect(() => {
-        let timeoutId;
-
         if (events1.length > 0) {
             setIsLoading(true);
-            timeoutId = setTimeout(() => {
-                const transformedEvents = transformGoogleEvents(events1);
-                setEvents(transformedEvents);
-                setIsLoading(false);
-            }, 500);
+            const transformedEvents = transformGoogleEvents(events1);
+            setEvents(transformedEvents);
+            setIsLoading(false);
         } else {
             setIsLoading(true);
-            timeoutId = setTimeout(() => {
-                setIsLoading(false);
-            }, 500);
         }
-
-        return () => {
-            if (timeoutId) clearTimeout(timeoutId);
-        };
     }, [events1]);
-
-    console.log('Calendar Events:', events1);
 
     const handleEventClick = (event) => {
         setSelectedEvent(event);
@@ -134,7 +129,12 @@ function CalendarPage({ events1, setEvents1 }) {
 
     return (
         <div className="container h-full pt-[2%] relative">
-            <WeeklyCalendar events={isLoading ? [] : events} onEventClick={handleEventClick} />
+            <WeeklyCalendar
+                events={isLoading ? [] : events}
+                onEventClick={handleEventClick}
+                setEvents1={setEvents1}
+                selectedDate={selectedDate}
+            />
 
             {isLoading && (
                 <div className="absolute inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center">
@@ -185,7 +185,7 @@ const PageLayout = () => {
                         credentials: 'include',
                         body: JSON.stringify({ events: events1 })
                     });
-                    
+
                     if (response.ok) {
                         const data = await response.json();
                         setWelcomeMessage(data.message);
@@ -198,8 +198,6 @@ const PageLayout = () => {
 
         fetchWelcomeMessage();
     }, [events1]);
-
-    console.log(welcomeMessage);
 
     const handlePreferencesChange = (newPreferences) => {
         setUserPreferences(newPreferences);
@@ -218,13 +216,22 @@ const PageLayout = () => {
                     preferences: userPreferences
                 })
             });
-            console.log('Response:', response);
-            // Get the error message from the response
             const responseData = await response.json();
-            console.log('Response data:', responseData);
+
             if (!response.ok) {
                 throw new Error(responseData.message || 'Failed to schedule event');
             }
+
+            // Fetch updated events after successful scheduling
+            const eventsResponse = await fetch('http://127.0.0.1:5000/api/events', {
+                credentials: 'include'
+            });
+
+            if (eventsResponse.ok) {
+                const eventsData = await eventsResponse.json();
+                setEvents1(eventsData.events);  // Update events
+            }
+
             return responseData;
         } catch (error) {
             console.error('Error scheduling event:', error);
@@ -234,15 +241,15 @@ const PageLayout = () => {
 
     return (
         <div className={manrope.className}>
-            <div className="min-h-screen bg-gray-50">
+            <div className="min-h-screen bg-white">
                 <div className="w-full">
                     {/* Main Grid Layout */}
                     <div className="grid grid-cols-12 gap-4">
 
                         {/* Left Column aka Month Calendar View + Preferences */}
-                        <div className="col-span-2 h-screen">
+                        <div className="col-span-2 h-screen border-r border-black-200 shadow-md">
                             {/* Top Left Month Calendar View */}
-                            <div className="h-[35vh]">
+                            <div className="h-[40vh]">
                                 <Calendar
                                     mode="single"
                                     selected={date}
@@ -252,23 +259,19 @@ const PageLayout = () => {
                             </div>
 
                             {/* Preferences */}
-                            <div className="h-[65vh]">
-                                <Preferences onPreferencesChange={handlePreferencesChange}/>
+                            <div className="h-[60vh]">
+                                <Preferences onPreferencesChange={handlePreferencesChange} />
                             </div>
                         </div>
 
                         {/* Middle Column aka Main Calendar View */}
                         <div className="col-span-7 h-screen">
-                            <CalendarPage events1={events1} setEvents1={setEvents1} />
+                            <CalendarPage events1={events1} setEvents1={setEvents1} selectedMonthDate={date} />
                         </div>
 
                         {/* Right Column aka Chronos Chatbot */}
-                        <div className="col-span-3 h-screen">
-                            {/* <DemoContent
-                                title="Chronos"
-                                className="h-[90vh] bg-[#E4E4E4] rounded-xl"
-                            /> */}
-                            <ChatInterface 
+                        <div className="col-span-3 h-[90vh]">
+                            <ChatInterface
                                 onSubmit={handleChatSubmit}
                                 welcomeMessage={welcomeMessage}
                             />
