@@ -1,14 +1,19 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Send } from 'lucide-react';
 
-const ChatInterface = ({ onSubmit }) => {
-    const [messages, setMessages] = useState([
-        {
-            id: 1,
-            text: "Hi! I'm Chronos, your AI scheduling assistant. How can I help you today?",
-            isUser: false
+const ChatInterface = ({ welcomeMessage, onSubmit }) => {
+    console.log('in chat interface,', welcomeMessage);
+    const [messages, setMessages] = useState([]);
+
+    useEffect(() => {
+        if (welcomeMessage) {
+            setMessages([{
+                id: 1,
+                text: welcomeMessage,
+                isUser: false
+            }]);
         }
-    ]);
+    }, [welcomeMessage]);
 
     const [newMessage, setNewMessage] = useState('');
 

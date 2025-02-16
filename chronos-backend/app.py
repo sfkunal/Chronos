@@ -260,5 +260,13 @@ def schedule_event():
     
     return jsonify({'matches': email_matches})
 
+
+@app.route('/api/welcome_msg', methods=['POST'])
+def set_welcome_message():
+    events = request.get_json()
+
+    return jsonify({'message': 'Good morning, Lee.'})
+
+
 if __name__ == '__main__':
     app.run(debug=True, use_reloader=True, port=5000)
