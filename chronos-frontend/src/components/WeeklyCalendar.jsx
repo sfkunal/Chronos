@@ -87,6 +87,22 @@ const WeeklyCalendar = ({ events, onEventClick, setEvents1, selectedDate }) => {
         }
     }, []); // Empty dependency array means this runs once when component mounts
 
+    // Add this useEffect to track when events are actually loaded
+    useEffect(() => {
+        if (events.length > 0) {
+            // Filter events to only show current week's events
+            const currentWeekEvents = events.filter(event => {
+                const eventDate = event.start;
+                return isWithinInterval(eventDate, { start: weekStart, end: weekEnd });
+            });
+            
+            // If we have events for the current week, signal that loading is complete
+            if (currentWeekEvents.length > 0) {
+                setIsLoading(false);
+            }
+        }
+    }, [events, weekStart, weekEnd]);
+
     return (
         <div className="w-full h-full flex flex-col overflow-hidden">
             <div className="flex justify-between items-center mb-4 px-4">

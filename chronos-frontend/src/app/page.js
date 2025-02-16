@@ -111,27 +111,16 @@ function CalendarPage({ selectedMonthDate, events1, setEvents1 }) {
         }
     }, [isLoggedIn]);
 
-    // Transform and combine events when events1 changes
+    // Modify this useEffect to remove the artificial delay
     useEffect(() => {
-        let timeoutId;
-
         if (events1.length > 0) {
             setIsLoading(true);
-            timeoutId = setTimeout(() => {
-                const transformedEvents = transformGoogleEvents(events1);
-                setEvents(transformedEvents);
-                setIsLoading(false);
-            }, 500);
+            const transformedEvents = transformGoogleEvents(events1);
+            setEvents(transformedEvents);
+            setIsLoading(false);
         } else {
             setIsLoading(true);
-            timeoutId = setTimeout(() => {
-                setIsLoading(false);
-            }, 500);
         }
-
-        return () => {
-            if (timeoutId) clearTimeout(timeoutId);
-        };
     }, [events1]);
 
     console.log('Calendar Events:', events1);
