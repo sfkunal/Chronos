@@ -95,8 +95,6 @@ const Event = ({ event, style, onClick, dayIndex, setEvents1 }) => {
             } else {
                 toast.error(data.message);
             }
-
-            console.log('Edit/Delete response:', data);
             
         } catch (error) {
             console.error('Error processing edit/delete request:', error);
