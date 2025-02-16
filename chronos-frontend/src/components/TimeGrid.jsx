@@ -2,7 +2,7 @@ import React from 'react';
 
 const TimeGrid = () => {
     return (
-        <div className="w-16 flex-shrink-0 border-r bg-gray-50 relative min-h-screen">
+        <div className="w-16 flex-shrink-0 border-r bg-white-500 relative min-h-screen">
             {Array.from({ length: 24 }).map((_, i) => (
                 <div
                     key={i}

@@ -6,14 +6,23 @@ import { startOfWeek, endOfWeek, isWithinInterval, addWeeks, subWeeks, format } 
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Search } from 'lucide-react';
 
-const WeeklyCalendar = ({ events, onEventClick }) => {
+const WeeklyCalendar = ({ events, onEventClick, selectedDate }) => {
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    const [currentDate, setCurrentDate] = useState(new Date());
+    const [currentDate, setCurrentDate] = useState(selectedDate);
     const [searchQuery, setSearchQuery] = useState('');
     const [isSearchExpanded, setIsSearchExpanded] = useState(false);
     const [searchResults, setSearchResults] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
     const scrollAreaRef = useRef(null);
+
+    useEffect(() => {
+        if (selectedDate) {
+            setCurrentDate(selectedDate);
+        }
+    }, [selectedDate]);
+
+    console.log("selected date", selectedDate);
+    console.log("current date", currentDate);
 
     // Get current week's start and end dates
     const weekStart = startOfWeek(currentDate);
@@ -38,7 +47,7 @@ const WeeklyCalendar = ({ events, onEventClick }) => {
 
     const handleSearch = async (e) => {
         e.preventDefault();
-        
+
         if (searchQuery.length > 2) {
             setIsLoading(true);
             try {
@@ -82,7 +91,7 @@ const WeeklyCalendar = ({ events, onEventClick }) => {
                 <h1 className="text-4xl font-bold mb-4">
                     <span className="font-bold">{format(currentDate, 'MMMM')}</span>
                     <span className="font-normal"> {format(currentDate, 'yyyy')}</span></h1>
-                <div className="flex items-center justify-end px-4 py-2 bg-white-50">
+                <div className="flex items-center justify-end px-4 py-2 bg-white">
                     <form onSubmit={handleSearch} className="relative">
                         <div className="relative">
                             <input
@@ -105,8 +114,8 @@ const WeeklyCalendar = ({ events, onEventClick }) => {
                                 className={`
                                     pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500
                                     transition-all duration-1000 ease-in-out
-                                    ${isSearchExpanded 
-                                        ? 'w-64 opacity-100' 
+                                    ${isSearchExpanded
+                                        ? 'w-64 opacity-100'
                                         : 'w-0 opacity-0 overflow-hidden border-0'
                                     }
                                 `}
@@ -169,7 +178,7 @@ const WeeklyCalendar = ({ events, onEventClick }) => {
                                                 <div className="mt-4">
                                                     <div className="text-xs font-semibold text-gray-500 uppercase mb-2">Related Events</div>
                                                     {searchResults.events.map((event, index) => (
-                                                        <div 
+                                                        <div
                                                             key={index}
                                                             className="p-2 hover:bg-gray-50 rounded cursor-pointer"
                                                             onClick={() => onEventClick(event)}
@@ -185,14 +194,14 @@ const WeeklyCalendar = ({ events, onEventClick }) => {
                                         </>
                                     )}
                                 </div>
-                                <button 
+                                <button
                                     className="absolute top-2 right-2 p-1 hover:bg-gray-100 rounded-full"
                                     onClick={() => {
                                         setSearchResults(null);
                                         setIsLoading(false);
                                     }}
                                 >
-                                    <svg 
+                                    <svg
                                         className="h-4 w-4 text-gray-400"
                                         fill="none"
                                         strokeLinecap="round"
@@ -210,7 +219,7 @@ const WeeklyCalendar = ({ events, onEventClick }) => {
                 </div>
             </div>
             {/* Header with navigation and week display */}
-            <div className="flex items-center justify-end px-4 py-2 bg-white-50 border-b">
+            <div className="flex items-center justify-end px-4 py-2 bg-white border-b">
                 <div className="flex items-center gap-1">
                     <Button
                         variant="outline"
@@ -236,7 +245,7 @@ const WeeklyCalendar = ({ events, onEventClick }) => {
             </div>
 
             {/* Days header */}
-            <div className="flex border-b bg-white-50">
+            <div className="flex border-b bg-white">
                 <div className="w-16 flex-shrink-0 border-r" />
                 {days.map((day, i) => {
                     const date = addWeeks(weekStart, 0);
