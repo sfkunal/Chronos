@@ -531,7 +531,7 @@ class SchedulingAgent:
                         "content": prompt
                     }
                 ],
-                model="llama3-70b-8192",
+                model="llama3-8b-8192",
                 temperature=0.1  # Add low temperature for more precise responses
             )
             
