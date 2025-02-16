@@ -112,7 +112,14 @@ class CalendarAPI:
             orderBy='startTime'
         ).execute()
         
-        return events_result.get('items', [])
+        # Filter out all-day events
+        events = events_result.get('items', [])
+        filtered_events = [
+            event for event in events 
+            if 'dateTime' in event.get('start', {})
+        ]
+        
+        return filtered_events
 
     def delete_calendar_event(self, event_id):
         try:
