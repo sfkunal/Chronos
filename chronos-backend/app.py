@@ -13,7 +13,6 @@ from search_engine import stringify_event, update_events_in_chroma, search_event
 from groq import Groq
 import json
 import os
-from speech_to_text import SpeechToTextAssistant
 import threading
 import time
 
@@ -680,40 +679,6 @@ def set_welcome_message():
     # print(day_summary)
 
     return jsonify({'message': day_summary})
-
-
-speech_assistant = SpeechToTextAssistant()
-
-@app.route('/api/speech-to-text', methods=['POST'])
-def speech_to_text():
-    if 'audio' not in request.files:
-        return jsonify({'error': 'No audio file provided'}), 400
-
-    try:
-        audio_file = request.files['audio']
-        audio_data = audio_file.read()
-        
-        # Process the audio data
-        audio_bytes = speech_assistant.process_audio_data(audio_data)
-        
-        # Transcribe using Groq
-        transcribed_text = speech_assistant.speech_to_text_g(audio_bytes)
-        print('*'*20)
-        print(transcribed_text)
-        print('*'*20)
-
-        
-        if transcribed_text:
-            return jsonify({'text': transcribed_text})
-        else:
-            return jsonify({'error': 'Failed to transcribe audio'}), 500
-            
-    except Exception as e:
-        print(f"Error in speech to text: {str(e)}")
-        return jsonify({'error': str(e)}), 500
-    
-
-
 
 
 if __name__ == '__main__':
