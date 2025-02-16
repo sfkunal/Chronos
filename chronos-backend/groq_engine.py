@@ -549,6 +549,83 @@ def get_groq_welcome(events_today):
 
 
 
+class EditOrDeleteIntentAgent:
+    class Intents(BaseModel):
+        intent: str
+
+        @classmethod
+        def model_validator(cls, values):
+            if values.intent not in ["EDIT", "DELETE", "UNKNOWN"]:
+                raise ValueError("Intent must be either EDIT, DELETE, or UNKNOWN")
+            return values
+
+    def __init__(self):
+        self.groq_client = Groq(api_key=os.getenv('GROQ_API_KEY'))
+        self.system_prompt = """You are a specialized intent classifier for calendar event modifications. Your task is to analyze user requests about EXISTING calendar events and classify them as either EDIT or DELETE. You must output EXACTLY one of these two words.
+
+        Guidelines for classification:
+        
+        DELETE - Use when the user wants to:
+        - Remove or cancel an event entirely
+        - Clear a time slot
+        - Get rid of a meeting or appointment
+        - No longer attend an event
+        
+        Key DELETE indicators:
+        - "cancel", "remove", "delete", "clear"
+        - "don't want to go anymore"
+        - "take off my calendar"
+        - "not attending"
+        
+        EDIT - Use when the user wants to:
+        - Change any aspect of an existing event
+        - Modify time, date, location, or attendees
+        - Update event details or description
+        - Add or remove specific attendees
+        - Change the duration
+        
+        Key EDIT indicators:
+        - "change", "move", "update", "modify"
+        - "reschedule", "shift", "push"
+        - "make it longer/shorter"
+        - "add person to", "remove person from"
+        - "switch location"
+        
+        Examples:
+        "Cancel my meeting with John" → DELETE
+        "Remove tomorrow's dentist appointment" → DELETE
+        "I can't make it to the team sync" → DELETE
+        "Delete the lunch meeting" → DELETE
+        "Clear my calendar for Friday" → DELETE
+        
+        "Move my 2pm call to 4pm" → EDIT
+        "Change the location of tonight's dinner" → EDIT
+        "Add Sarah to the project review" → EDIT
+        "Make the meeting 30 minutes longer" → EDIT
+        "Update the zoom link for the standup" → EDIT
+        "Push back the doctor's appointment by 1 hour" → EDIT
+        "Change this to a virtual meeting" → EDIT
+        
+        Remember: You must output EXACTLY either EDIT, DELETE, or UNKNOWN.
+        If you cannot determine the intent, output UNKNOWN."""
+
+    def extract_intent(self, query):
+        chat_completion = self.groq_client.chat.completions.create(
+            messages=[
+                {
+                    "role": "system",
+                    "content": self.system_prompt
+                },
+                {
+                    "role": "user",
+                    "content": query,
+                }
+            ],
+            model="llama3-8b-8192",
+        )
+        response = chat_completion.choices[0].message.content
+        return self.Intents(intent=response)
+
 # Update the test code
 if __name__ == "__main__":
     try:

@@ -43,11 +43,10 @@ const getColorFromId = (colorId) => {
     return colorMap[colorId] || colorMap.default;
 };
 
-function CalendarPage() {
+function CalendarPage({ events1, setEvents1 }) {
     const [events, setEvents] = useState([]);
     const [selectedEvent, setSelectedEvent] = useState(null);
     const [isLoggedIn, setIsLoggedIn] = React.useState(false);
-    const [events1, setEvents1] = React.useState([]);
     const [authToken, setAuthToken] = React.useState(null);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -170,9 +169,42 @@ function CalendarPage() {
 const PageLayout = () => {
     const [date, setDate] = React.useState(new Date())
     const [userPreferences, setUserPreferences] = React.useState([]);
+    const [welcomeMessage, setWelcomeMessage] = React.useState('');
+    const [events1, setEvents1] = React.useState([]);
+
+    // Add useEffect to fetch welcome message when events1 changes
+    useEffect(() => {
+        const fetchWelcomeMessage = async () => {
+            if (events1.length > 0) {
+                try {
+                    const response = await fetch('http://127.0.0.1:5000/api/welcome_msg', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        credentials: 'include',
+                        body: JSON.stringify({ events: events1 })
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        setWelcomeMessage(data.message);
+                    }
+                } catch (error) {
+                    console.error('Error fetching welcome message:', error);
+                }
+            }
+        };
+
+        fetchWelcomeMessage();
+    }, [events1]);
+
+    console.log(welcomeMessage);
+
     const handlePreferencesChange = (newPreferences) => {
         setUserPreferences(newPreferences);
     };
+
     const handleChatSubmit = async (prompt) => {
         try {
             const response = await fetch('http://127.0.0.1:5000/api/schedule', {
@@ -227,7 +259,7 @@ const PageLayout = () => {
 
                         {/* Middle Column aka Main Calendar View */}
                         <div className="col-span-7 h-screen">
-                            <CalendarPage />
+                            <CalendarPage events1={events1} setEvents1={setEvents1} />
                         </div>
 
                         {/* Right Column aka Chronos Chatbot */}
@@ -236,7 +268,10 @@ const PageLayout = () => {
                                 title="Chronos"
                                 className="h-[90vh] bg-[#E4E4E4] rounded-xl"
                             /> */}
-                            <ChatInterface onSubmit={handleChatSubmit}/>
+                            <ChatInterface 
+                                onSubmit={handleChatSubmit}
+                                welcomeMessage={welcomeMessage}
+                            />
                         </div>
                     </div>
                 </div>
