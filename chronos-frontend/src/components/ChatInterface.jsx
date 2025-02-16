@@ -89,7 +89,7 @@ const ChatInterface = ({ welcomeMessage, onSubmit }) => {
                     >
                         <div
                             className={`
-                                max-w-xs lg:max-w-md px-3 py-2 rounded-lg
+                                max-w-xs lg:max-w-md px-3 py-2 rounded-lg shadow-md
                                 ${message.isUser
                                     ? 'bg-blue-100 text-gray-800 rounded-br-none'
                                     : 'bg-white text-gray-800 border border-gray-200 rounded-bl-none'}
