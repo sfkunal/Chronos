@@ -3,9 +3,10 @@ import { Send, Mic } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 
 const ChatInterface = ({ welcomeMessage, onSubmit }) => {
-    console.log('in chat interface,', welcomeMessage);
     const [messages, setMessages] = useState([]);
     const [isRecording, setIsRecording] = useState(false);
+    const [newMessage, setNewMessage] = useState('');
+    const [mediaRecorder, setMediaRecorder] = useState(null);
 
     useEffect(() => {
         if (welcomeMessage) {
@@ -17,7 +18,23 @@ const ChatInterface = ({ welcomeMessage, onSubmit }) => {
         }
     }, [welcomeMessage]);
 
-    const [newMessage, setNewMessage] = useState('');
+    const formatEventResponse = (response) => {
+        if (!response || !response.events || !Array.isArray(response.events)) {
+            return "I've processed your request, but there was an issue with the response format.";
+        }
+
+        const eventCount = response.events.length;
+        if (eventCount === 0) {
+            return "No events were created. Please try again.";
+        }
+
+        if (eventCount === 1) {
+            return `I've created your event: "${response.events[0].summary}". Check your calendar for details!`;
+        }
+
+        const eventSummaries = response.events.map(event => event.summary).join('" and "');
+        return `I've created ${eventCount} events: "${eventSummaries}". Check your calendar for details!`;
+    };
 
     const handleSendMessage = async () => {
         if (newMessage.trim() === '') return;
@@ -42,25 +59,37 @@ const ChatInterface = ({ welcomeMessage, onSubmit }) => {
                 isUser: false
             }]);
 
-            // Send to backend
-            await onSubmit(messageToSend);
+            // Send to backend and get response
+            const response = await onSubmit(messageToSend);
 
-            // Replace loading message with confirmation
+            // Format response message based on events created
+            const responseMessage = formatEventResponse(response);
+
+            // Replace loading message with formatted response
             setMessages(prev => [
                 ...prev.slice(0, -1),
                 {
                     id: prev.length,
-                    text: "I've processed your request. Check your calendar for updates!",
+                    text: responseMessage,
                     isUser: false
                 }
             ]);
         } catch (error) {
+            // Handle different types of errors
+            let errorMessage = "Sorry, I encountered an error while processing your request. Please try again.";
+            
+            if (error.message && error.message.includes("Invalid JSON response from LLM")) {
+                errorMessage = "I had trouble understanding how to schedule these events. Could you rephrase your request?";
+            } else if (error.response && error.response.data && error.response.data.message) {
+                errorMessage = `Error: ${error.response.data.message}`;
+            }
+
             // Replace loading message with error
             setMessages(prev => [
                 ...prev.slice(0, -1),
                 {
                     id: prev.length,
-                    text: "Sorry, I encountered an error while processing your request. Please try again.",
+                    text: errorMessage,
                     isUser: false
                 }
             ]);
@@ -68,10 +97,7 @@ const ChatInterface = ({ welcomeMessage, onSubmit }) => {
         }
     };
 
-    const [mediaRecorder, setMediaRecorder] = useState(null);
-
     const handleMicClick = () => {
-        console.log('MIC PRESSED')
         if (isRecording) {
             mediaRecorder.stop();
             setIsRecording(false);
@@ -93,22 +119,7 @@ const ChatInterface = ({ welcomeMessage, onSubmit }) => {
                         stream.getTracks().forEach(track => track.stop());
                         const formData = new FormData();
                         formData.append('audio', audioBlob, 'temp.wav');
-                        console.log(formData);
-                        console.log('Audio blob size:', audioBlob.size);
 
-                                           // Create temporary URL for audio playback
-                    const audioUrl = URL.createObjectURL(audioBlob);
-                    
-                    // Create and play audio element (for debugging)
-                    const audio = new Audio(audioUrl);
-                    audio.play();
-                    
-                    // Log audio details
-                    console.log('Audio duration:', audioBlob.duration);
-                    console.log('Audio blob type:', audioBlob.type);
-                    console.log('Audio blob size:', audioBlob.size);
-
-    
                         try {
                             const response = await fetch('http://127.0.0.1:5000/api/speech-to-text', {
                                 method: 'POST',
@@ -129,8 +140,6 @@ const ChatInterface = ({ welcomeMessage, onSubmit }) => {
                 .catch(error => console.error('Error accessing microphone:', error));
         }
     };
-
-
 
     return (
         <div className="flex flex-col h-screen max-w-md mx-auto bg-gray-50 shadow-lg">
@@ -162,7 +171,6 @@ const ChatInterface = ({ welcomeMessage, onSubmit }) => {
                         >
                             <ReactMarkdown
                                 components={{
-                                    // Style markdown elements with Tailwind classes
                                     h1: ({ node, ...props }) => <h1 className="text-2xl font-bold mb-2" {...props} />,
                                     h2: ({ node, ...props }) => <h2 className="text-xl font-bold mb-2" {...props} />,
                                     h3: ({ node, ...props }) => <h3 className="text-lg font-bold mb-2" {...props} />,

@@ -413,21 +413,21 @@ def schedule_event():
             scheduling_agent = SchedulingAgent(calendar_api.service, calendar_api.people_service)
         
         # Process the scheduling request
-        event_details = scheduling_agent.process_request(
+        events_list = scheduling_agent.process_request(
             data['action_query'],
             data['preferences']
         )
         
         # Check for errors in event details
-        if isinstance(event_details, dict) and event_details.get('status') == 'error':
+        if isinstance(events_list, dict) and events_list.get('status') == 'error':
             return jsonify({
                 'status': 'error',
-                'message': event_details['message'],
-                'details': event_details.get('raw_response', '')
+                'message': events_list['message'],
+                'details': events_list.get('raw_response', '')
             }), 400, response_headers
             
-        # Create the calendar event
-        response = scheduling_agent.create_calendar_event(event_details)
+        # Create the calendar events
+        response = scheduling_agent.create_calendar_events(events_list)
         
         # Add headers to responses
         if response.get('status') == 'error':

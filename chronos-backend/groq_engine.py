@@ -278,32 +278,35 @@ class SchedulingAgent:
 
         self.system_prompt = """You are a calendar scheduling assistant. Today's date is {} and the current time is {} Pacific Time.
 
-        Given an action query and user preferences, generate a calendar event in the exact JSON format specified.
-        Handle relative time expressions like:
-        - "tomorrow", "next week", "in 3 days"
-        - "this afternoon", "evening", "morning"
-        - "next Monday", "this Friday"
+        Given an action query and user preferences, generate one or more calendar events in the exact JSON format specified.
+        Handle relative time expressions and multiple events in queries like:
+        - "tomorrow and next week"
+        - "every Monday and Wednesday"
+        - "this afternoon and evening"
+        - "next Monday, this Friday, and Saturday"
 
-        Your output must be valid JSON and match this structure exactly:
-        {{
-            "summary": "Brief title of event",
-            "description": "Detailed description",
-            "start": {{
-                "dateTime": "YYYY-MM-DDTHH:mm:ss-HH:MM",
-                "timeZone": "America/Los_Angeles"
-            }},
-            "end": {{
-                "dateTime": "YYYY-MM-DDTHH:mm:ss-HH:MM",
-                "timeZone": "America/Los_Angeles"
-            }},
-            "location": "Optional location",
-            "attendees": [
-                {{"email": "example@email.com"}}
-            ],
-            "reminders": {{
-                "useDefault": true
+        Your output must be valid JSON and be an array of events matching this structure exactly:
+        [
+            {{
+                "summary": "Brief title of event",
+                "description": "Detailed description",
+                "start": {{
+                    "dateTime": "YYYY-MM-DDTHH:mm:ss-HH:MM",
+                    "timeZone": "America/Los_Angeles"
+                }},
+                "end": {{
+                    "dateTime": "YYYY-MM-DDTHH:mm:ss-HH:MM",
+                    "timeZone": "America/Los_Angeles"
+                }},
+                "location": "Optional location",
+                "attendees": [
+                    {{"email": "example@email.com"}}
+                ],
+                "reminders": {{
+                    "useDefault": true
+                }}
             }}
-        }}
+        ]
 
         Rules:
         1. Times must be in exact ISO format with timezone offset
@@ -313,50 +316,60 @@ class SchedulingAgent:
         5. Extract attendee ONLY if emails are present in the query
         6. Extract location if present
         7. Always set reminders.useDefault to true
-        8. ABOVE ALL, RESPECT THE AVAILABILITY PREFERENCES THAT A USER PROVIDES YOU""".format(current_date, current_time)
+        8. Return an array even for single events
+        9. ABOVE ALL, RESPECT THE AVAILABILITY PREFERENCES THAT A USER PROVIDES YOU""".format(current_date, current_time)
 
-    def create_calendar_event(self, event_data):
+    def create_calendar_events(self, events_data):
         """
-        Creates a Google Calendar event from either a JSON string or dictionary.
-        Returns the created event details or error message.
+        Creates multiple Google Calendar events from either a JSON string or list of dictionaries.
+        Returns the created events details or error message.
         """
         try:
-            # Handle input that could be either JSON string or dict
-            if isinstance(event_data, str):
+            # Handle input that could be either JSON string or list
+            if isinstance(events_data, str):
                 # Clean up the JSON string
-                json_str = event_data.strip()
+                json_str = events_data.strip()
                 if "```" in json_str:
                     json_str = json_str.split("```")[1].split("```")[0]
-                event_details = json.loads(json_str)
-            elif isinstance(event_data, dict):
-                event_details = event_data
+                events_list = json.loads(json_str)
+            elif isinstance(events_data, list):
+                events_list = events_data
             else:
-                raise ValueError(f"Unexpected event data type: {type(event_data)}")
+                raise ValueError(f"Unexpected events data type: {type(events_data)}")
             
-            # Validate required fields
-            required_fields = ['summary', 'start', 'end']
-            for field in required_fields:
-                if field not in event_details:
-                    raise ValueError(f"Missing required field: {field}")
-            
-            # Create the event using Google Calendar API
-            event = self.service.events().insert(
-                calendarId='primary',
-                body=event_details
-            ).execute()
+            if not isinstance(events_list, list):
+                events_list = [events_list]  # Convert single event to list
+                
+            created_events = []
+            for event_details in events_list:
+                # Validate required fields
+                required_fields = ['summary', 'start', 'end']
+                for field in required_fields:
+                    if field not in event_details:
+                        raise ValueError(f"Missing required field: {field}")
+                
+                # Create the event using Google Calendar API
+                event = self.service.events().insert(
+                    calendarId='primary',
+                    body=event_details
+                ).execute()
+                
+                created_events.append({
+                    'event_id': event.get('id'),
+                    'html_link': event.get('htmlLink'),
+                    'summary': event.get('summary')
+                })
             
             return {
                 'status': 'success',
-                'event_id': event.get('id'),
-                'html_link': event.get('htmlLink'),
-                'summary': event.get('summary')
+                'events': created_events
             }
             
         except json.JSONDecodeError as e:
             return {
                 'status': 'error',
                 'message': f'Failed to parse JSON: {str(e)}',
-                'raw_response': event_data
+                'raw_response': events_data
             }
         except ValueError as e:
             return {
@@ -366,7 +379,7 @@ class SchedulingAgent:
         except Exception as e:
             return {
                 'status': 'error',
-                'message': f'Failed to create event: {str(e)}'
+                'message': f'Failed to create events: {str(e)}'
             }
 
     def process_request(self, action_query: str, preferences: list[str]):
@@ -374,8 +387,6 @@ class SchedulingAgent:
         try:
             intent = self.intent_agent.extract_intent(action_query)
             preference_rules = self.preferences_agent.get_rule_based_preferences(preferences)
-
-            # print("action_query", action_query)
             
             if intent.intent in ["CREATE", "EDIT"]:
                 chat_completion = self.groq_client.chat.completions.create(
@@ -391,8 +402,9 @@ class SchedulingAgent:
                             Current Availability: {self.availability_agent.get_two_week_availability() if self.availability_agent else 'Not available'}
                             Contacts: {self.contacts}
                             
-                            Generate a calendar event JSON that respects these preferences and availability.
-                            Remember to include:
+                            Generate calendar event JSON that respects these preferences and availability.
+                            If the query implies multiple events, return an array of events.
+                            Remember to include for each event:
                             1. Start and end times in ISO format with timezone
                             2. Summary and description
                             3. Attendees ONLY IF an email is provided
@@ -403,7 +415,6 @@ class SchedulingAgent:
                 )
                 
                 llm_response = chat_completion.choices[0].message.content
-                # print("Raw LLM Response:", llm_response)  # Debug print
                 
                 # Parse and validate the response
                 try:
@@ -414,37 +425,42 @@ class SchedulingAgent:
                             json_str = json_str.split("```json")[1].split("```")[0]
                         elif "```" in json_str:
                             json_str = json_str.split("```")[1].split("```")[0]
-                        event_details = json.loads(json_str)
+                        events_list = json.loads(json_str)
                     else:
-                        event_details = llm_response
+                        events_list = llm_response
 
-                    # Validate required fields
-                    required_fields = ['summary', 'start', 'end']
-                    missing_fields = [field for field in required_fields if field not in event_details]
-                    if missing_fields:
-                        raise ValueError(f"Missing required fields: {', '.join(missing_fields)}")
+                    if not isinstance(events_list, list):
+                        events_list = [events_list]  # Convert single event to list
 
-                    # Validate start and end have dateTime
-                    if 'dateTime' not in event_details['start'] or 'dateTime' not in event_details['end']:
-                        raise ValueError("Start and end must include dateTime")
+                    # Validate each event
+                    for event_details in events_list:
+                        # Validate required fields
+                        required_fields = ['summary', 'start', 'end']
+                        missing_fields = [field for field in required_fields if field not in event_details]
+                        if missing_fields:
+                            raise ValueError(f"Missing required fields: {', '.join(missing_fields)}")
 
-                    # Ensure timeZone is present
-                    event_details['start']['timeZone'] = 'America/Los_Angeles'
-                    event_details['end']['timeZone'] = 'America/Los_Angeles'
+                        # Validate start and end have dateTime
+                        if 'dateTime' not in event_details['start'] or 'dateTime' not in event_details['end']:
+                            raise ValueError("Start and end must include dateTime")
 
-                    # Ensure reminders are set
-                    if 'reminders' not in event_details:
-                        event_details['reminders'] = {'useDefault': True}
+                        # Ensure timeZone is present
+                        event_details['start']['timeZone'] = 'America/Los_Angeles'
+                        event_details['end']['timeZone'] = 'America/Los_Angeles'
 
-                    # Process attendees if email is in the query
-                    if 'attendees' not in event_details:
-                        event_details['attendees'] = []
-                        import re
-                        emails = re.findall(r'[\w\.-]+@[\w\.-]+\.\w+', action_query)
-                        for email in emails:
-                            event_details['attendees'].append({'email': email})
+                        # Ensure reminders are set
+                        if 'reminders' not in event_details:
+                            event_details['reminders'] = {'useDefault': True}
 
-                    return event_details
+                        # Process attendees if email is in the query
+                        if 'attendees' not in event_details:
+                            event_details['attendees'] = []
+                            import re
+                            emails = re.findall(r'[\w\.-]+@[\w\.-]+\.\w+', action_query)
+                            for email in emails:
+                                event_details['attendees'].append({'email': email})
+
+                    return events_list
 
                 except json.JSONDecodeError as e:
                     return {
@@ -471,42 +487,6 @@ class SchedulingAgent:
                 'message': f'Failed to process request: {str(e)}',
                 'traceback': str(e.__traceback__)
             }
-
-    @staticmethod
-    def get_groq_response(prompt):
-        try:
-            from groq import Groq
-            import os
-            from dotenv import load_dotenv
-            
-            load_dotenv()
-            groq_client = Groq(api_key=os.getenv('GROQ_API_KEY'))
-            
-            completion = groq_client.chat.completions.create(
-                messages=[
-                    {
-                        "role": "system",
-                        "content": """You are a precise calendar assistant that ONLY states facts directly from event information.
-                        - IMPORTANT: If the event is recurring, include ONLY that and the times it recurs in the response
-                        - Never make assumptions about events
-                        - Only use explicitly stated information
-                        - Use exact dates and times
-                        - Keep responses under 20 words
-                        - If information isn't in the event details, say so"""
-                    },
-                    {
-                        "role": "user",
-                        "content": prompt
-                    }
-                ],
-                model="llama3-70b-8192",
-                temperature=0.1  # Add low temperature for more precise responses
-            )
-            
-            return completion.choices[0].message.content
-        except Exception as e:
-            print(f"Error getting Groq response: {str(e)}")
-            return "I couldn't find that information in the calendar."
         
 
 def get_groq_welcome(events_today, current_time):
