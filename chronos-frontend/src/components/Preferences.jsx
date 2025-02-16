@@ -1,5 +1,6 @@
 'use client'
 import React, { useState, useEffect } from 'react';
+import { MessageCirclePlus } from 'lucide-react';
 
 const Preferences = ({ onPreferencesChange }) => {
   const [preferences, setPreferences] = useState([]);
@@ -39,7 +40,7 @@ const Preferences = ({ onPreferencesChange }) => {
   };
 
   return (
-    <div className="h-full p-4 bg-gray-50 rounded-xl flex flex-col overflow-hidden">
+    <div className="h-full p-3 bg-gray-50 rounded-xl flex flex-col overflow-hidden">
       <h2 className="text-2xl font-semibold text-gray-700 mb-4">Preferences</h2>
 
       {/* Preferences List */}
@@ -68,20 +69,20 @@ const Preferences = ({ onPreferencesChange }) => {
       </div>
 
       {/* Input Form */}
-      <div className="mt-auto">
-        <form onSubmit={handleSubmit}>
+      <div className="pt-3">
+        <form onSubmit={handleSubmit} className="flex items-center space-x-2">
           <input
             type="text"
             value={newPreference}
             onChange={(e) => setNewPreference(e.target.value)}
             placeholder="Add a new preference..."
-            className="w-full p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+            className="flex-1 py-2 px-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
           <button
             type="submit"
-            className="w-full mt-2 p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-          >
-            Add Preference
+            className="w-8 h-8 rounded-full bg-gray-400 text-white flex items-center justify-center hover:bg-blue-600 transition"
+            >
+            <MessageCirclePlus size="55%" />
           </button>
         </form>
       </div>
