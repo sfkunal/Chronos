@@ -18,13 +18,10 @@ const WeeklyCalendar = ({ events, onEventClick, setEvents1, selectedDate }) => {
 
     useEffect(() => {
         if (selectedDate) {
-            console.log("selected date is defined");
             setCurrentDate(selectedDate);
         }
     }, [selectedDate]);
 
-    console.log("selected date", selectedDate);
-    console.log("current date", currentDate);
 
     // Get current week's start and end dates
     const weekStart = startOfWeek(currentDate);
