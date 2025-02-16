@@ -1,9 +1,19 @@
 'use client'
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const Preferences = ({ onPreferencesChange }) => {
   const [preferences, setPreferences] = useState([]);
   const [newPreference, setNewPreference] = useState('');
+
+  // Load preferences from localStorage on component mount
+  useEffect(() => {
+    const savedPreferences = localStorage.getItem('preferences');
+    if (savedPreferences) {
+      const parsedPreferences = JSON.parse(savedPreferences);
+      setPreferences(parsedPreferences);
+      onPreferencesChange(parsedPreferences);
+    }
+  }, []);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -13,9 +23,19 @@ const Preferences = ({ onPreferencesChange }) => {
     const updatedPreferences = [...preferences, newPreference];
     setPreferences(updatedPreferences);
     onPreferencesChange(updatedPreferences);
+    // Save to localStorage
+    localStorage.setItem('preferences', JSON.stringify(updatedPreferences));
 
     // Clear input
     setNewPreference('');
+  };
+
+  const handleDelete = (indexToDelete) => {
+    const updatedPreferences = preferences.filter((_, index) => index !== indexToDelete);
+    setPreferences(updatedPreferences);
+    onPreferencesChange(updatedPreferences);
+    // Save to localStorage
+    localStorage.setItem('preferences', JSON.stringify(updatedPreferences));
   };
 
   return (
@@ -31,9 +51,16 @@ const Preferences = ({ onPreferencesChange }) => {
             {preferences.map((pref, index) => (
               <li 
                 key={index} 
-                className="p-2 bg-white rounded-lg shadow-sm"
+                className="p-2 bg-white rounded-lg shadow-sm relative group"
               >
                 {pref}
+                <button
+                  onClick={() => handleDelete(index)}
+                  className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                  aria-label="Delete preference"
+                >
+                  ×
+                </button>
               </li>
             ))}
           </ul>
