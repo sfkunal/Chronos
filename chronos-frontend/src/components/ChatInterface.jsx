@@ -9,7 +9,7 @@ const ChatInterface = ({ welcomeMessage, onSubmit }) => {
     const [mediaRecorder, setMediaRecorder] = useState(null);
 
     useEffect(() => {
-        if (welcomeMessage) {
+        if (welcomeMessage && messages.length === 0) {
             setMessages([{
                 id: 1,
                 text: welcomeMessage,
