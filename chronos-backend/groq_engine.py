@@ -487,6 +487,7 @@ class SchedulingAgent:
                     {
                         "role": "system",
                         "content": """You are a precise calendar assistant that ONLY states facts directly from event information.
+                        - IMPORTANT: If the event is recurring, include ONLY that and the times it recurs in the response
                         - Never make assumptions about events
                         - Only use explicitly stated information
                         - Use exact dates and times

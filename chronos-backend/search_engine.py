@@ -148,5 +148,8 @@ def stringify_event(event):
     
     if 'description' in event and event['description']:
         parts.append(f"with description: {event['description']}")
+
+    if 'recurrence' in event:
+        parts.append(f" and recurs every {event['recurrence']}")
     
     return ' '.join(parts) + ". "
