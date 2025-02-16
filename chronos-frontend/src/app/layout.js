@@ -14,6 +14,15 @@ const geistMono = Geist_Mono({
 export const metadata = {
   title: "Chronos Calendar",
   description: "Your Calendar, Your Way",
+  icons: {
+    icon: '/logo.svg',
+    shortcut: '/logo.svg',
+    apple: '/logo.svg',
+    other: {
+      rel: 'apple-touch-icon',
+      url: '/logo.svg',
+    },
+  },
 };
 
 export default function RootLayout({ children }) {

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Send } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import Image from 'next/image';
 
 const ChatInterface = ({ welcomeMessage, onSubmit }) => {
     const [messages, setMessages] = useState([]);
@@ -191,10 +192,13 @@ const ChatInterface = ({ welcomeMessage, onSubmit }) => {
             {/* Header */}
             <div className="p-3 border-b flex items-center space-x-3 bg-white">
                 <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                    <svg width="50%" height="50%" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 8V12L15 15" stroke="#4F6BED" strokeWidth="2" strokeLinecap="round" />
-                        <circle cx="12" cy="12" r="9" stroke="#4F6BED" strokeWidth="2" />
-                    </svg>
+                    <Image
+                        src="/logo.svg"
+                        alt="Chronos Logo"
+                        width={21}
+                        height={21}
+                        priority
+                    />
                 </div>
                 <h1 className="text-xl font-semibold text-gray-800">Chronos</h1>
             </div>
