@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, session, redirect, request, url_for
+from flask import Flask, jsonify, session, redirect, request, url_for, Response
 from flask_cors import CORS
 import os
 import pytz
@@ -14,18 +14,30 @@ from groq import Groq
 import json
 import os
 from speech_to_text import SpeechToTextAssistant
+import threading
+import time
 
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'  # Allow HTTP connections in development
 
 app = Flask(__name__)
 app.secret_key = 'thisisSECRET1340iu5203u5103'
 
-# Simpler CORS configuration
+# Update CORS configuration
 CORS(app, 
      origins=["http://localhost:3000"],
      supports_credentials=True,
-     allow_headers=["Content-Type"],
-     methods=["GET", "POST", "OPTIONS"])
+     allow_headers=["Content-Type", "Authorization"],
+     methods=["GET", "POST", "OPTIONS"],
+     expose_headers=['Content-Type', 'Content-Length'],
+     max_age=3600,
+     resources={
+         r"/api/*": {
+             "origins": ["http://localhost:3000"],
+             "allow_headers": ["Content-Type", "Authorization"],
+             "methods": ["GET", "POST", "OPTIONS"],
+             "supports_credentials": True
+         }
+     })
 
 SCOPES = [
     'https://www.googleapis.com/auth/calendar',
@@ -341,6 +353,9 @@ class CalendarAPI:
 calendar_api = CalendarAPI()
 scheduling_agent = None  # Will be initialized after authentication
 
+# Add a dictionary to store processing status
+processing_status = {}
+
 @app.route('/')
 def hello_world():
     return "hello world"
@@ -484,6 +499,94 @@ def schedule_event():
             'message': f'Failed to process scheduling request: {str(e)}'
         }), 500, response_headers
 
+@app.route('/api/schedule/status', methods=['POST'])
+def schedule_status():
+    if not calendar_api.service:
+        return jsonify({
+            'error': 'Not authenticated'
+        }), 401
+
+    try:
+        data = request.get_json()
+        query = data.get('query')
+        preferences = data.get('preferences', [])
+
+        if not query:
+            return jsonify({'error': 'No query provided'}), 400
+
+        # Get or create status for this query
+        status_key = f"{session.get('user_id', 'default')}_{query}"
+        if status_key not in processing_status:
+            # Initialize new processing status
+            processing_status[status_key] = {
+                'stage': 'Starting...',
+                'message': 'Initializing request...',
+                'complete': False,
+                'response': None
+            }
+            
+            # Start processing in background
+            def process_request():
+                try:
+                    # Initialize scheduling agent if needed
+                    global scheduling_agent
+                    if scheduling_agent is None:
+                        scheduling_agent = SchedulingAgent(calendar_api.service, calendar_api.people_service)
+
+                    # Update status for intent classification
+                    processing_status[status_key].update({
+                        'stage': 'Classifying intent...',
+                        'message': 'Determining if this is a create, edit, or delete request...'
+                    })
+                    intent = scheduling_agent.intent_agent.extract_intent(query)
+                    
+                    # Update status for preferences
+                    processing_status[status_key].update({
+                        'stage': 'Processing preferences...',
+                        'message': 'Analyzing your calendar preferences...'
+                    })
+                    
+                    # Update status for calendar check
+                    processing_status[status_key].update({
+                        'stage': 'Checking calendar...',
+                        'message': 'Looking up your availability...'
+                    })
+                    
+                    # Process the scheduling request
+                    events_list = scheduling_agent.process_request(query, preferences)
+                    
+                    # Update status for event creation
+                    processing_status[status_key].update({
+                        'stage': 'Creating events...',
+                        'message': 'Adding events to your calendar...'
+                    })
+                    
+                    # Create the calendar events
+                    response = scheduling_agent.create_calendar_events(events_list)
+                    
+                    # Update final status
+                    processing_status[status_key].update({
+                        'complete': True,
+                        'response': response
+                    })
+                    
+                except Exception as e:
+                    processing_status[status_key].update({
+                        'complete': True,
+                        'error': str(e)
+                    })
+
+            # Start processing thread
+            thread = threading.Thread(target=process_request)
+            thread.start()
+
+        # Return current status
+        return jsonify(processing_status[status_key])
+
+    except Exception as e:
+        return jsonify({
+            'error': str(e)
+        }), 500
 
 @app.route('/api/editOrDelete', methods=['POST'])
 def edit_or_delete():
